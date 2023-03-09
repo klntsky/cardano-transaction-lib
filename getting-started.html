@@ -59,7 +59,7 @@
     code span.wa { font-style: italic; } /* Warning */
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
-  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <link rel="stylesheet" href="./pandoc.css" />
   <center>
     <a href="./index.html#documentation">back to contents</a>
   </center>
@@ -313,7 +313,7 @@ key, you can use <code>cardano-cli</code> as follows:</p>
 <pre class="shell"><code>$ cardano-cli address key-gen --normal-key --signing-key-file payment.skey --verification-key-file payment.vkey</code></pre>
 <p>The signing key can be loaded to CTL using <code>WalletSpec</code>’s
 <code>UseKeys</code> constructor. See <a
-href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/2e22855d43dafbb14d386e393d581d8635760378
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/0460f48fcd5c178b12da90be4f8c13d1cfce8e0f
 /examples/KeyWallet/Internal/Pkh2PkhContract.purs#L49"><code>examples/KeyWallet/Internal/Pkh2PkhContract.purs</code></a>.</p>
 <p>From here you can submit transactions that will be signed with your
 private key, or perhaps export transactions to be tested with external
