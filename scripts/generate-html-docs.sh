@@ -11,6 +11,7 @@ pandoc -f markdown \
            --lua-filter=../scripts/readme-link-fixup.lua \
            --lua-filter=../scripts/links-to-html.lua \
            --lua-filter=../scripts/title-from-markdown.lua \
+           --include-in-header=../scripts/readme-header.html \
            --template=../scripts/template.html \
            -t html -s ../README.md > ../html/index.html;
 
