@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
 mkdir -p ./html
+cp scripts/pandoc.css ./html/
 cd doc;
+
 pandoc -f markdown \
            --standalone \
-           --css ../scripts/pandoc.css \
+           --css ./pandoc.css \
            --highlight-style monochrome \
            --lua-filter=../scripts/readme-link-fixup.lua \
            --lua-filter=../scripts/links-to-html.lua \
@@ -15,7 +17,7 @@ pandoc -f markdown \
 for i in ./*.md; do
     pandoc -f markdown \
            --standalone \
-           --css ../scripts/pandoc.css \
+           --css ./pandoc.css \
            --highlight-style monochrome \
            -V geometry:margin=1in \
            --lua-filter=../scripts/links-to-html.lua \
