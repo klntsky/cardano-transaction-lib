@@ -25,8 +25,7 @@ jobs:
           spago docs --no-search
           purescript-docs-search build-index --package-name cardano-transaction-lib
           make pandoc
-          mkdir -p html/doc
-          mv generated-docs/html html/doc/
+          mv generated-docs/html html/doc
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4
         with:
