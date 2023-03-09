@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>test-utils</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<ul>
+<li><a href="#ctl-utilities-for-testing">CTL utilities for testing</a>
+<ul>
+<li><a href="#assertions">Assertions</a></li>
+<li><a href="#checks">Checks</a></li>
+<li><a href="#examples">Examples</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="ctl-utilities-for-testing">CTL utilities for testing</h2>
+<p><code>Contract.Test.Assert</code> module provides a DSL for
+assertions that accumulate error messages, instead of exiting early
+after the first failure.</p>
+<p>There are two kinds of tests:</p>
+<ul>
+<li><p><code>ContractAssertion</code> type: assertions that can raise
+recoverable errors with <code>tellFailure</code></p></li>
+<li><p><code>ContractCheck</code> type: Checks can inspect the state
+both before and after <code>Contract</code> execution, allowing to
+monitor for effects, e.g. monetary gains/losses at address</p></li>
+</ul>
+<p><code>runChecks</code> function accepts an array of checks and a
+<code>Contract</code> action to run, lifted to
+<code>ContractAssertion</code> to allow for assertion accumulation
+(lifting can be done with
+<code>Control.Monad.Trans.Class.lift</code>):</p>
+<pre class="purescript"><code>runChecks
+  :: forall (a :: Type)
+   . Array (ContractCheck a)
+  -&gt; ContractAssertion a
+  -&gt; Contract a</code></pre>
+<h3 id="assertions">Assertions</h3>
+<p>To convert an assertion into a <code>ContractCheck</code>,
+<code>Contract.Test.Assert.assertionToCheck</code> can be used:</p>
+<pre class="purescript"><code>assertionToCheck
+  :: forall (a :: Type)
+   . String
+  -&gt; (a -&gt; ContractAssertion Unit)
+  -&gt; ContractCheck a</code></pre>
+<p>The first argument is a descriptive message that will be printed in
+case there is an exception thrown inside the <code>Contract</code> that
+is being tested. This is done because in case of an exception there’s no
+way to get the result value of type <code>a</code>. For better developer
+experience, all the tests skipped due to the exception will still be
+mentioned in the report, e.g. <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/examples/ContractTestUtils.purs">for this example</a>:</p>
+<pre><code>  ✗ Examples.ContractTestUtils:
+
+  Error: An exception has been thrown:
+
+Error: (some error message)
+    at Object.exports.error (/home/me/c/cardano-transaction-lib/output/Effect.Exception/foreign.js:8:10)
+    at Object.$$throw [as throw] (/home/me/c/cardano-transaction-lib/output/Effect.Exception/index.js:18:45)
+    at /home/me/c/cardano-transaction-lib/output/Ctl.Examples.ContractTestUtils/index.js:131:506
+    at /home/me/c/cardano-transaction-lib/output/Control.Monad.Reader.Trans/index.js:108:34
+    at run (/home/me/c/cardano-transaction-lib/output/Effect.Aff/foreign.js:278:22)
+    at /home/me/c/cardano-transaction-lib/output/Effect.Aff/foreign.js:348:19
+    at drain (/home/me/c/cardano-transaction-lib/output/Effect.Aff/foreign.js:120:9)
+    at Object.enqueue (/home/me/c/cardano-transaction-lib/output/Effect.Aff/foreign.js:141:11)
+    at /home/me/c/cardano-transaction-lib/output/Effect.Aff/foreign.js:339:27
+    at /home/me/c/cardano-transaction-lib/output/Effect.Aff.Compat/index.js:18:55
+
+The following `Contract` checks have been skipped due to an exception:
+
+    1. Sender&#39;s output has a datum
+
+    2. Output has a reference script
+
+    3. Contains CIP-25 metadata</code></pre>
+<h3 id="checks">Checks</h3>
+<p><code>ContractCheck</code> is defined as follows:</p>
+<pre><code>type ContractCheck a =
+  ContractAssertion a
+    -&gt; ContractAssertion (ContractAssertion a /\ ContractAssertion Unit)</code></pre>
+<ul>
+<li>The argument is the <code>Contract</code> to be tested itself</li>
+<li>The outer <code>ContractAssertion</code> can perform effects to
+initialize internal assertion state (e.g. creation of <code>Ref</code>s
+that can be used by actions in the tuple)</li>
+<li>The first component of the tuple is the <code>Contract</code> that
+is supposed to be executed. It can be modified in the outer
+<code>ContractAssertion</code> action, but most checks would simply
+return it unchanged.</li>
+<li>The second component of the tuple is a finalization action, that is
+executed after the first component is run, regardless of whether the
+result of execution was success or an exception. This allows to
+implement checks that inspect the state change before and after, as well
+as the mechanism of skipped assertions reporting.</li>
+</ul>
+<h3 id="examples">Examples</h3>
+<p>Particular values can be constructed with utility functions, as
+demonstrated in the <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/examples/ContractTestUtils.purs">ContractTestUtils example</a> (see
+<code>mkAssertions</code>).</p>
+<p>All the functions require <code>Labeled</code> arguments, that can be
+constructed with <code>label</code> function; or <code>noLabel</code>,
+if descriptive names in error messages are not needed.</p>
+</body>
+</html>

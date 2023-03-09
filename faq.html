@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CTL FAQ</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">CTL FAQ</h1> -->
+</header>
+<h1 id="ctl-faq">CTL FAQ</h1>
+<p>This document lists common problems encountered by CTL users and
+developers.</p>
+<p><strong>Table of Contents</strong>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --></p>
+<ul>
+<li><a href="#bundling-related">Bundling-related</a>
+<ul>
+<li><a href="#q-libsomething-is-not-a-function-why">Q:
+<code>lib.something</code> is not a function, why?</a></li>
+<li><a href="#q-i-see-spago-error-remote-host-not-found-why">Q: I see
+<code>spago: Error: Remote host not found</code>, why?</a></li>
+</ul></li>
+<li><a href="#common-contract-execution-problems">Common Contract
+execution problems</a>
+<ul>
+<li><a
+href="#q-what-are-the-common-reasons-behind-balanceinsufficienterror">Q:
+What are the common reasons behind BalanceInsufficientError?</a></li>
+<li><a href="#q-ctl-consumed-my-collateral">Q: CTL consumed my
+collateral</a></li>
+</ul></li>
+<li><a href="#time-related">Time-related</a>
+<ul>
+<li><a
+href="#q-time-related-functions-behave-strangely-whats-the-reason">Q:
+Time-related functions behave strangely, what’s the reason?</a></li>
+<li><a
+href="#q-timeslot-conversion-functions-return-nothing-why-is-that">Q:
+Time/slot conversion functions return <code>Nothing</code>. Why is
+that?</a></li>
+<li><a
+href="#q-im-getting-uncomputable-slot-arithmetic-transactions-validity-bounds-go-beyond-the-foreseeable-end-of-the-current-era-pasthorizon">Q:
+I’m getting
+<code>Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: PastHorizon</code></a></li>
+</ul></li>
+<li><a href="#ecosystem">Ecosystem</a>
+<ul>
+<li><a href="#q-why-aeson-and-not-argonaut">Q: Why <code>aeson</code>
+and not <code>argonaut</code>?</a></li>
+</ul></li>
+<li><a href="#environment-related">Environment-related</a>
+<ul>
+<li><a href="#q-i-use-wayland-the-e2e-browser-fails-on-startup">Q: I use
+wayland, the E2E browser fails on startup</a></li>
+<li><a
+href="#q-how-to-keep-the-number-of-websocket-connections-to-a-minimum">Q:
+How to keep the number of WebSocket connections to a minimum?</a></li>
+<li><a
+href="#package-chromium-10505195125-is-not-supported-on-x86_64-darwin">Package
+‘chromium-105.0.5195.125’ is not supported on ‘x86_64-darwin’</a></li>
+</ul></li>
+<li><a href="#miscellaneous">Miscellaneous</a>
+<ul>
+<li><a
+href="#q-why-am-i-getting-error-atkey-coinsperutxobyte-missingvalue">Q:
+Why am I getting
+<code>Error: (AtKey "coinsPerUtxoByte" MissingValue)</code>?</a></li>
+<li><a
+href="#q-why-do-i-get-an-error-from-foreignjs-when-running-plutip-tests-locally">Q:
+Why do I get an error from <code>foreign.js</code> when running Plutip
+tests locally?</a></li>
+<li><a
+href="#q-how-can-i-write-my-own-nix-derivations-using-the-project-returned-by-purescriptproject">Q:
+How can I write my own Nix derivations using the project returned by
+<code>purescriptProject</code>?</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="bundling-related">Bundling-related</h2>
+<h3 id="q-lib.something-is-not-a-function-why">Q:
+<code>lib.something</code> is not a function, why?</h3>
+<p>This is probably because npm is used directly. This is something
+users have reported when using <code>npm install</code> instead of
+having Nix manage the node dependencies (done automatically with
+<code>nix develop</code>, but if you have <code>node_modules</code>
+present in the working directory it will shadow the ones from the Nix
+store).</p>
+<p>You can prevent <code>npm</code> from ever installing to local
+<code>node_modules</code> by enabling the <code>packageLockOnly</code>
+flag in the <code>shell</code> argument to
+<code>purescriptProject</code>. When enabled, <code>npm i</code> will
+always act as if the <code>--package-lock-only</code> flag has been
+passed. This is not enabled by default, but we recommend enabling
+it.</p>
+<h3 id="q-i-see-spago-error-remote-host-not-found-why">Q: I see
+<code>spago: Error: Remote host not found</code>, why?</h3>
+<p>An error like this one:</p>
+<pre><code>spago:
+Error: Remote host not found
+
+URL: https://github.com/purescript/package-sets/releases/download/psc-0.14.5-20220224/packages.dhall</code></pre>
+<p>means that the CTL overlay hasn’t been properly applied. Add
+<code>ctl.overlays.spago</code>.</p>
+<h2 id="common-contract-execution-problems">Common Contract execution
+problems</h2>
+<h3
+id="q-what-are-the-common-reasons-behind-balanceinsufficienterror">Q:
+What are the common reasons behind BalanceInsufficientError?</h3>
+<p>Most contracts require at least two UTxOs to run (one will be used as
+a collateral). If you use a wallet with only one UTxO, e.g. a new wallet
+you just funded from the faucet, you need to send yourself at least 5
+Ada to create another UTxO for the collateral.</p>
+<p>Another thing to keep in mind is that due to <a
+href="https://docs.cardano.org/native-tokens/minimum-ada-value-requirement/">min-ada
+requirements</a>, the amount of Ada that is required to be
+<em>consumed</em> by a Tx is higher than the amount that must be
+<em>spent</em>, because CTL creates change UTxOs. The amount of Ada that
+should be present on a wallet depends on a number of factors, including
+the amount and quantity of tokens in the users wallet.</p>
+<h3 id="q-ctl-consumed-my-collateral">Q: CTL consumed my collateral</h3>
+<p>CTL does not consume wallet collateral normally, but it still can
+happen.</p>
+<p>In order to get the collateral UTxO, CTL uses the wallet and then
+marks the returned UTxO as locked internally. But some wallets
+(e.g. Gero) do not return the collateral the moment it is set, waiting
+for Tx confirmation first. In case a collateral is set right before the
+contract is started, CTL can accidentally spend the collateral, because
+we rely on CTL’s own query layer to get a list of available UTxOs, and
+the wallet state may lag behind it, not returning the collateral to
+filter out at that moment.</p>
+<h2 id="time-related">Time-related</h2>
+<h3 id="q-time-related-functions-behave-strangely-whats-the-reason">Q:
+Time-related functions behave strangely, what’s the reason?</h3>
+<p>Local <code>cardano-node</code> lags behind the global network time,
+so when using time conversion functions (<code>slotToPosixTime</code>,
+<code>posixTimeToSlot</code>, etc.) users should be aware that the node
+sees time differently from the OS. During normal runs, the lag can be
+somewhere between 0 and 200 seconds.</p>
+<p>To do anything time-related, it’s best to rely on local node chain
+tip time, instead of using <code>Date.now()</code> as a source of truth.
+This is often a requirement when using <code>mustValidateIn</code>,
+because the node will reject the transaction if it appears too
+early.</p>
+<h3 id="q-timeslot-conversion-functions-return-nothing.-why-is-that">Q:
+Time/slot conversion functions return <code>Nothing</code>. Why is
+that?</h3>
+<p>Time/slot conversion functions depend on <code>eraSummaries</code> <a
+href="https://ogmios.dev/mini-protocols/local-state-query/">Ogmios local
+state query</a>, that returns era bounds and slotting parameters
+details, required for proper slot arithmetic. The most common source of
+the problem is that Ogmios does not return enough epochs into the
+future.</p>
+<h3
+id="q-im-getting-uncomputable-slot-arithmetic-transactions-validity-bounds-go-beyond-the-foreseeable-end-of-the-current-era-pasthorizon">Q:
+I’m getting
+<code>Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: PastHorizon</code></h3>
+<p>Ensure your transaction’s validity range does not go over
+<code>SafeZone</code> slots of the current era. The reason for this kind
+of errors is that time-related estimations are slot-based, and future
+forks may change slot lengths. So there is only a relatively small time
+window in the future during which it is known that forks cannot
+occur.</p>
+<h2 id="ecosystem">Ecosystem</h2>
+<h3 id="q-why-aeson-and-not-argonaut">Q: Why <code>aeson</code> and not
+<code>argonaut</code>?</h3>
+<p>Haskell’s <code>aeson</code> library encodes long integers as JSON
+numbers, which leads to numeric truncation on decoder side if JS
+<code>Number</code> is used. Unfortunately,
+<code>purescript-argonaut</code> does not allow to use another type,
+because the truncation happens during <code>JSON.parse</code> call.
+<code>purescript-aeson</code> is our custom solution that bypasses this
+limitation by storing numbers as strings. It exposes a very similar
+API.</p>
+<h2 id="environment-related">Environment-related</h2>
+<h3 id="q-i-use-wayland-the-e2e-browser-fails-on-startup">Q: I use
+wayland, the E2E browser fails on startup</h3>
+<p>We are aware of two error messages that can be show to you if you are
+using wayland.</p>
+<details>
+<summary>
+You can get something like this if you try to open the e2e browser
+</summary>
+cardano-transaction-lib@3.0.0~e2e-browser: Args: [ ‘-c’, “source
+./test/e2e.env &amp;&amp; spago run –main Test.Ctl.E2E -a ‘e2e-test
+browser’” ] cardano-transaction-lib@3.0.0~e2e-browser: Returned: code: 1
+signal: null cardano-transaction-lib@3.0.0~e2e-browser: Failed to exec
+e2e-browser script Error: cardano-transaction-lib@3.0.0 e2e-browser:
+<code>source ./test/e2e.env &amp;&amp; spago run --main Test.Ctl.E2E -a 'e2e-test browser'</code>
+Exit status 1 at EventEmitter.<anonymous>
+(/nix/store/lrvrir70n3966jybpjqw91smhcwlyn00-nodejs-14.20.0/lib/node_modules/npm/node_modules/npm-lifecycle/index.js:332:16)
+at EventEmitter.emit (events.js:400:28) at ChildProcess.<anonymous>
+(/nix/store/lrvrir70n3966jybpjqw91smhcwlyn00-nodejs-14.20.0/lib/node_modules/npm/node_modules/npm-lifecycle/lib/spawn.js:55:14)
+at ChildProcess.emit (events.js:400:28) at maybeClose
+(internal/child_process.js:1088:16) at
+Process.ChildProcess._handle.onexit (internal/child_process.js:296:5)
+pkgid cardano-transaction-lib@3.0.0
+</details>
+<details>
+<summary>
+This error message can be found while trying to run
+<code>e2e-test-debug</code>
+</summary>
+<p>E2E tests ✗
+plutip:http://localhost:4008/?plutip-nami-mock:OneShotMinting:</p>
+<pre><code>Error: Failed to launch the browser process!
+[76104:76104:1207/234245.704016:ERROR:ozone_platform_x11.cc(238)] Missing X server or $DISPLAY
+[76104:76104:1207/234245.704036:ERROR:env.cc(255)] The platform failed to initialize.  Exiting.&lt;/details&gt;</code></pre>
+</details>
+<p>If you are under wayland you need to add
+<code>--ozone-platform=wayland</code> to the arguments for the browser.
+You can use the <code>--extra-browser-args</code> argument for this, as
+in
+<code>e2e-test browser --extra-browser-args="--ozone-platform=wayland"</code>
+or the <code>E2E_EXTRA_BROWSER_ARGS</code> environment variable.</p>
+<h3
+id="q-how-to-keep-the-number-of-websocket-connections-to-a-minimum">Q:
+How to keep the number of WebSocket connections to a minimum?</h3>
+<p>Use only one <code>ContractEnv</code> value. They are implicitly
+created every time <code>runContract</code> is called, so avoid using
+this function if you need to run multiple <code>Contract</code>s.</p>
+<p>Instead, initialize the environment with <code>withContractEnv</code>
+and pass it to <code>runContractInEnv</code>. The former ensures that
+the environment is properly finalized, but it forces the developer to
+follow the bracket pattern, which is not always convenient. As an
+alternative, <code>mkContractEnv</code> can be used. If you are
+initializing a contract environment with <code>mkContractEnv</code> only
+once during the lifeteime of your app, you should be fine, but if you
+re-create it dynamically and do not finalize it with
+<code>stopContractEnv</code>, it’s fairly easy to hit the max websocket
+connections limit, which is 200 for Firefox, not to mention that it
+would be forcing the server to keep the connections.</p>
+<h3
+id="package-chromium-105.0.5195.125-is-not-supported-on-x86_64-darwin">Package
+‘chromium-105.0.5195.125’ is not supported on ‘x86_64-darwin’</h3>
+<p>Chromium is used in <a href="./e2e-testing.html">E2E test suite</a>.
+Chromium is pinned in nix shell by default, because system versions of
+chromium may be affected by <a
+href="https://bugs.chromium.org/p/chromium/issues/detail?id=706008#c39">this
+bug</a></p>
+<p>To disable, set <code>withChromium</code> to <code>false</code> in <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/946818b72e3ac1321feebe2944ca2986da2ddc01/templates/ctl-scaffold/flake.nix#L96"><code>purescriptProject</code>’s
+<code>shell</code> argument</a>.</p>
+<h2 id="miscellaneous">Miscellaneous</h2>
+<h3 id="q-why-am-i-getting-error-atkey-coinsperutxobyte-missingvalue">Q:
+Why am I getting
+<code>Error: (AtKey "coinsPerUtxoByte" MissingValue)</code>?</h3>
+<p>This is because the node hasn’t fully synced. The protocol parameter
+name changed from <code>coinsPerUtxoWord</code> to
+<code>coinsPerUtxoByte</code> in Babbage. CTL only supports the latest
+era, but Ogmios returns different protocol parameters format depending
+on current era of a local node.</p>
+<h3
+id="q-why-do-i-get-an-error-from-foreign.js-when-running-plutip-tests-locally">Q:
+Why do I get an error from <code>foreign.js</code> when running Plutip
+tests locally?</h3>
+<p>The most likely reason for this is that spawning the external
+processes from <code>Contract.Test.Plutip</code> fails. Make sure that
+all of the required services are on your <code>$PATH</code> (see more <a
+href="./runtime.html">here</a>; you can also set
+<code>shell.withRuntime = true;</code> to ensure that these are always
+added to your shell environment when running
+<code>nix develop</code>).</p>
+<h3
+id="q-how-can-i-write-my-own-nix-derivations-using-the-project-returned-by-purescriptproject">Q:
+How can I write my own Nix derivations using the project returned by
+<code>purescriptProject</code>?</h3>
+<p>If the different derivation builders that
+<code>purescriptProject</code> gives you out-of-the-box
+(e.g. <code>runPursTest</code>, <code>bundlePursProject</code>, etc…)
+are not sufficient, you can access the compiled project (all of the
+original <code>src</code> argument plus the <code>output</code>
+directory that <code>purs</code> produces) and the generated
+<code>node_modules</code> using the <code>compiled</code> and
+<code>nodeModules</code> attributes, respectively. These can be used to
+write your own derivations without needing to recompile the entire
+project (that is, the generated output can be shared between all of your
+Nix components). For example:</p>
+<pre class="nix"><code>{
+  project = pkgs.purescriptProject { /* snip */ };
+
+  # `purescriptProject` returns a number of specialized builders
+  bundle = project.bundlePursProject { /* snip */ };
+
+  # And attributes allowing you to create your own without
+  # needing to deal with `spago2nix` or recompiling your
+  # project in different components
+  specialPackage = pkgs.runCommand &quot;my-special-package&quot;
+    {
+      NODE_PATH = &quot;${project.nodeModules}/lib/node_modules&quot;;
+    }
+    &#39;&#39;
+      cp -r ${project.compiled}/* .
+      # Do more stuff ...
+    &#39;&#39;;
+}
+</code></pre>
+</body>
+</html>

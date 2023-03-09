@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Side by side comparison of CTL and Plutus off-chain contracts</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+      }
+    pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { font-weight: bold; } /* Alert */
+    code span.an { font-style: italic; } /* Annotation */
+    code span.cf { font-weight: bold; } /* ControlFlow */
+    code span.co { font-style: italic; } /* Comment */
+    code span.cv { font-style: italic; } /* CommentVar */
+    code span.do { font-style: italic; } /* Documentation */
+    code span.dt { text-decoration: underline; } /* DataType */
+    code span.er { font-weight: bold; } /* Error */
+    code span.in { font-style: italic; } /* Information */
+    code span.kw { font-weight: bold; } /* Keyword */
+    code span.pp { font-weight: bold; } /* Preprocessor */
+    code span.wa { font-style: italic; } /* Warning */
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">Side by side comparison of CTL and Plutus
+off-chain contracts</h1> -->
+</header>
+<h1
+id="side-by-side-comparison-of-ctl-and-plutus-off-chain-contracts">Side
+by side comparison of CTL and Plutus off-chain contracts</h1>
+<p>We are going to compare two different off-chain contracts both in
+Plutus and CTL.</p>
+<p>For this discussion, we need to go through an overview of both of
+them.</p>
+<p><strong>Table of contents</strong>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --></p>
+<ul>
+<li><a href="#about-contract-in-ctl-and-plutus">About
+<code>Contract</code> in CTL and Plutus</a></li>
+<li><a href="#contract-comparison">Contract comparison</a>
+<ul>
+<li><a href="#mustpayto-functions">MustPayTo functions</a></li>
+<li><a href="#the-give-contract">The <code>give</code> contract</a></li>
+<li><a href="#the-grab-contract">The <code>grab</code> contract</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="about-contract-in-ctl-and-plutus">About <code>Contract</code> in
+CTL and Plutus</h2>
+<p>The current definition of <code>Contract</code> in CTL is :</p>
+<pre class="purescript"><code>type ContractEnv =
+  { -- Internal type holding connections to backend services, ledger
+    -- constants which are fixed during contract evaluation, and user defined
+    -- values like the choice of wallet and logger.
+  }
+
+newtype Contract (a :: Type) = Contract (ReaderT ContractEnv Aff a)</code></pre>
+<p>The parameter <code>a</code>, as in <code>Plutus</code> also, refers
+to a return value wrapped by <code>Contract</code>.</p>
+<p>Note that in Plutus right now we have the following definition for
+<code>Contract</code>:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">ContractEffs</span> w e <span class="ot">=</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    &#39;[ <span class="dt">Error</span> e</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    ,  <span class="dt">LogMsg</span> <span class="dt">Value</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    ,  <span class="dt">Writer</span> w</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    ,  <span class="dt">Checkpoint</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    ,  <span class="dt">Resumable</span> <span class="dt">PABResp</span> <span class="dt">PABReq</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    ]</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="dt">ContractEnv</span> <span class="ot">=</span> (<span class="dt">IterationID</span>, <span class="dt">RequestID</span>)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Contract</span> w (<span class="ot">s ::</span> <span class="dt">Row</span> <span class="op">*</span>) e a <span class="ot">=</span> <span class="dt">Contract</span> {<span class="ot"> unContract ::</span> <span class="dt">Eff</span> (<span class="dt">ContractEffs</span> w e) a }</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">deriving</span> <span class="kw">newtype</span> (<span class="dt">Functor</span>, <span class="dt">Applicative</span>, <span class="dt">Monad</span>)</span></code></pre></div>
+<p>The Plutus <code>Contract</code> environment is specialized to just
+two values and is fixed. Also, Plutus <code>Contract</code> uses a
+phantom type <code>s</code> for the contract schema and parameters
+<code>w</code> for a writer and <code>e</code> for errors. In the case
+of CTL we don’t have the contract schema parameter or the writer
+parameter since the definition of CTL allows performing arbitrary
+effects, from the use of <code>Aff</code>. <code>Aff</code> allows us to
+use asynchronous effects, which has a similar effect as using
+<code>IO</code> in Haskell, although isn’t the same. While most
+effectful actions are defined directly in terms of those provided by
+<code>Aff</code>, logging is provided by a configurable logger stored in
+<code>ContractEnv</code>.</p>
+<h2 id="contract-comparison">Contract comparison</h2>
+<p>We can now begin to compare contracts.</p>
+<p>The most famous contracts are those contained as part of the <a
+href="https://plutus-pioneer-program.readthedocs.io/en/latest/pioneer/week2.html">Plutus
+pioneer program</a> in week2. Both of them use the same on-chain
+contract that allows an arbitrary datum and arbitrary redeemer.</p>
+<h3 id="mustpayto-functions">MustPayTo functions</h3>
+<p>In the case of Plutus <code>Contract</code>, we use the function
+<code>mustPayToOtherScript</code>, according to Plutus ledger, is
+defined as:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ot">{-# INLINABLE mustPayToOtherScript #-}</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">-- | @mustPayToOtherScript vh d v@ locks the value @v@ with the given script</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">-- hash @vh@ alonside a datum @d@.</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">--</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">-- If used in &#39;Ledger.Constraints.OffChain&#39;, this constraint creates a script</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="co">-- output with @vh@, @d@ and @v@ and adds @d@ in the transaction&#39;s datum</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="co">-- witness set.</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co">--</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co">-- If used in &#39;Ledger.Constraints.OnChain&#39;, this constraint verifies that @d@ is</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co">-- part of the datum witness set and that the script transaction output with</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co">-- @vh@, @d@ and @v@ is part of the transaction&#39;s outputs.</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>mustPayToOtherScript</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="ot">  ::</span> <span class="kw">forall</span> i o<span class="op">.</span> <span class="dt">ValidatorHash</span> <span class="ot">-&gt;</span> <span class="dt">Datum</span> <span class="ot">-&gt;</span> <span class="dt">Value</span> <span class="ot">-&gt;</span> <span class="dt">TxConstraints</span> i o</span></code></pre></div>
+<p>While in the case of CTL we would use
+<code>mustPayToScript</code>:</p>
+<pre class="purescript"><code>-- | Note that CTL does not have explicit equivalents of Plutus&#39;
+-- | `mustPayToTheScript` or `mustPayToOtherScript`, as we have no notion
+-- | of a &quot;current&quot; script. Thus, we have the single constraint
+-- | `mustPayToScript`, and all scripts must be explicitly provided to build
+-- | the transaction.
+mustPayToScript
+  :: forall (i :: Type) (o :: Type)
+   . ValidatorHash
+  -&gt; Datum
+  -&gt; Value
+  -&gt; TxConstraints i o</code></pre>
+<h3 id="the-give-contract">The <code>give</code> contract</h3>
+<p>Now we can write and compare the <code>give</code> contract. This
+contract takes and amount of Ada from our wallet an lock it to the
+script that validates any transactions.</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Haskell</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ot">give ::</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">forall</span> (<span class="ot">w ::</span> <span class="dt">Type</span>) (<span class="ot">s ::</span> <span class="dt">Type</span>) (<span class="ot">e ::</span> <span class="dt">Type</span>)<span class="op">.</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">AsContractError</span> e <span class="ot">=&gt;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>      <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Contract</span> w s e ()</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>give amount <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>   <span class="kw">let</span> tx <span class="ot">=</span> mustPayToOtherScript vHash (<span class="dt">Datum</span> <span class="op">$</span> <span class="dt">Constr</span> <span class="dv">0</span> [])</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>              <span class="op">$</span> Ada.lovelaceValueOf amount</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>   ledgerTx <span class="ot">&lt;-</span> submitTx tx</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>   void <span class="op">$</span> awaitTxConfirmed <span class="op">$</span> txId ledgerTx</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>   logInfo <span class="op">@</span><span class="dt">String</span> <span class="op">$</span> printf <span class="st">&quot;made a gift of %d lovelace&quot;</span> amount</span></code></pre></div>
+<p>We include some of the imports for the PureScript contract.</p>
+<pre class="purescript"><code>-- PureScript
+import Contract.PlutusData (PlutusData, unitDatum)
+import Contract.ScriptLookups as Lookups
+import Contract.TxConstraints as Constraints
+import Contract.Prelude
+import Data.BigInt as BigInt
+
+give :: ValidatorHash -&gt; Contract TransactionHash
+give vhash = do
+  let
+    constraints :: Constraints.TxConstraints Unit Unit
+    constraints = Constraints.mustPayToScript vhash unitDatum
+      $ Value.lovelaceValueOf
+      $ BigInt.fromInt 2_000_000
+
+    lookups :: Lookups.ScriptLookups PlutusData
+    lookups = mempty
+
+  submitTxFromConstraints lookups constraints</code></pre>
+<h3 id="the-grab-contract">The <code>grab</code> contract</h3>
+<p>The Plutus <code>grab</code> example takes all the UTxOs locked by
+the on-chain contract that always validates a transaction, and spends
+them to get all in the wallet of the user running the example. This
+isn’t a problem as the example is intended to run inside a Plutus
+<code>EmulatorTrace</code> in a local toy environment.</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">-- Haskell</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ot">grab ::</span> <span class="kw">forall</span> w s e<span class="op">.</span> <span class="dt">AsContractError</span> e <span class="ot">=&gt;</span> <span class="dt">Contract</span> w s e ()</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>grab <span class="ot">=</span> <span class="kw">do</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>   utxos <span class="ot">&lt;-</span> utxoAt scrAddress</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>   <span class="kw">let</span> orefs <span class="ot">=</span> <span class="fu">fst</span> <span class="op">&lt;$&gt;</span> Map.toList utxos</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>      lookups <span class="ot">=</span> Constraints.unspentOutputs utxos <span class="op">&lt;&gt;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>                 Constraints.otherScript validator</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="ot">      tx ::</span> <span class="dt">TxConstraints</span> <span class="dt">Void</span> <span class="dt">Void</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>      tx <span class="ot">=</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>        <span class="fu">mconcat</span> [mustSpendScriptOutput oref <span class="op">$</span> <span class="dt">Redeemer</span> <span class="op">$</span> <span class="dt">I</span> <span class="dv">17</span> <span class="op">|</span> oref <span class="ot">&lt;-</span> orefs]</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>   ledgerTx <span class="ot">&lt;-</span> submitTxFromConstraints <span class="op">@</span><span class="dt">Void</span> lookups tx</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>   void <span class="op">$</span> awaitTxConfirmed <span class="op">$</span> txId ledgerTx</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>   logInfo <span class="op">@</span><span class="dt">String</span> <span class="op">$</span> <span class="st">&quot;collected gifts&quot;</span></span></code></pre></div>
+<p>To talk about the grab contract in CTL we need to talk about some
+functions and types of CTL first.</p>
+<pre class="purescript"><code>module Ctl.Internal.Plutus.Types.Transaction ...
+.
+.
+.
+type UtxoMap = Map TransactionInput TransactionOutputWithRefScript</code></pre>
+<pre class="purescript"><code>module Contract.Utxos ...
+.
+.
+.
+-- | Queries for utxos at the given Plutus `Address`.
+utxosAt
+  :: forall (address :: Type)
+   . PlutusAddress address
+  =&gt; address
+  -&gt; Contract UtxoMap</code></pre>
+<p>In the case of the CTL version of <code>grab</code>, we cannot use
+all the UTxOs locked by the validator that always validates, since the
+example is intended to run in the <code>testnet</code> and other people
+could have some values locked by the script. This is the reason we
+assume we have already run the <code>give</code> contract to pay some
+<code>testAda</code> to the validator first, and then We got a
+<code>TransactionHash</code>. We would use the
+<code>TransactionHash</code> to locate the right UTxO to spend.</p>
+<pre class="purescript"><code>-- PureScript
+grab
+  :: ValidatorHash
+  -&gt; Validator
+  -&gt; TransactionHash
+  -&gt; Contract Unit
+grab vhash validator txId = do
+  let scriptAddress = scriptHashAddress vhash Nothing
+  utxos &lt;- fromMaybe Map.empty &lt;$&gt; utxosAt scriptAddress
+  case fst &lt;$&gt; find hasTransactionId (Map.toUnfoldable utxos :: Array _) of
+    Just txInput -&gt;
+      let
+        lookups :: Lookups.ScriptLookups PlutusData
+        lookups = Lookups.validator validator
+          &lt;&gt; Lookups.unspentOutputs utxos
+
+        constraints :: TxConstraints Unit Unit
+        constraints =
+          Constraints.mustSpendScriptOutput txInput unitRedeemer
+      in
+        void $ submitTxFromConstraints lookups constraints
+    _ -&gt;
+      logInfo&#39; $ &quot;The id &quot;
+        &lt;&gt; show txId
+        &lt;&gt; &quot; does not have output locked at: &quot;
+        &lt;&gt; show scriptAddress
+  where
+  hasTransactionId :: TransactionInput /\ _ -&gt; Boolean
+  hasTransactionId (TransactionInput tx /\ _) =
+    tx.transactionId == txId</code></pre>
+<p>Notice the explicit signature in:</p>
+<pre class="purescript"><code>  fst &lt;$&gt; find hasTransactionId (Map.toUnfoldable utxos :: Array _)</code></pre>
+<p>Since PureScript has JS as the backend, <code>Array</code> is the
+most used container (instead of <code>List</code> as in Haskell), so, we
+prefer the use of <code>Array</code> over <code>List</code> whenever
+it’s adequate. A downside of this is the lack of pattern matching over
+arbitrary arrays.</p>
+<p>Both versions of the contract use the same kind of constraints. Both
+need to add the validator and the UTxOs to the <code>lookups</code> and
+both need the <code>SpendScriptOutput</code> constraint. In the case of
+Plutus, this is done by a special function that accept lookups, while in
+CTL this is done by the explicit construction of an unbalanced
+transaction.</p>
+</body>
+</html>

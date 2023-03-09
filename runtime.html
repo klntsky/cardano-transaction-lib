@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CTL’s Runtime Dependencies</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">CTL’s Runtime Dependencies</h1> -->
+</header>
+<h1 id="ctls-runtime-dependencies">CTL’s Runtime Dependencies</h1>
+<p>In order to run CTL’s <code>Contract</code> effects, several services
+are required. These can be accessed through a <code>ContractEnv</code>
+value that holds websocket connections, information about server
+hosts/ports, and other requisite information. Which services are
+required depends on which backend you are using.</p>
+<p>The choice is either <a href="https://ogmios.dev/">Ogmios</a>+<a
+href="https://cardanosolutions.github.io/kupo/">Kupo</a>+cardano-node
+(a.k.a. “CTL backend”) or <a
+href="https://blockfrost.io/">Blockfrost</a>.</p>
+<p>Our nix environment includes CTL backend services, but for now
+Blockfrost can be only used externally (either by connecting the public
+SaaS or the <a
+href="https://github.com/blockfrost/blockfrost-backend-ryo/">run-your-own
+version</a>. The self-hosted version still requires Ogmios for some of
+the endpoints).</p>
+<p><strong>Table of Contents</strong>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --></p>
+<ul>
+<li><a href="#ctl-backend">CTL Backend</a>
+<ul>
+<li><a href="#using-nixos-module">Using NixOS module</a></li>
+<li><a href="#using-ctls-runtime-overlay">Using CTL’s
+<code>runtime</code> overlay</a></li>
+<li><a href="#changing-network-configurations">Changing network
+configurations</a></li>
+</ul></li>
+<li><a href="#blockfrost-backend">Blockfrost Backend</a></li>
+<li><a href="#wallet-requirements">Wallet requirements</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="ctl-backend">CTL Backend</h2>
+<p>Info in this section only applies to CTL backend services.</p>
+<p>The services that are currently <strong>required</strong> are:</p>
+<ul>
+<li><a href="https://ogmios.dev">Ogmios</a>
+<ul>
+<li>You <strong>must</strong> use Ogmios v5.2.0 or greater with CTL</li>
+<li>Ogmios itself requires a running Cardano node, so you may also need
+to deploy a node. Node v1.34.0 or greater is recommended</li>
+<li>You can also use <a
+href="https://github.com/mlabs-haskell/ogmios">our fork</a> which has
+improved Nix integration</li>
+</ul></li>
+<li><a href="https://github.com/CardanoSolutions/kupo">Kupo</a>
+<ul>
+<li>Required to query UTxOs and resolve inline datums and reference
+scripts</li>
+<li>You <strong>must</strong> use Kupo v2.2.0 or greater with CTL</li>
+<li>Like Ogmios, Kupo requires a running Cardano node</li>
+</ul></li>
+</ul>
+<h3 id="using-nixos-module">Using NixOS module</h3>
+<p>CTL’s dependencies can be configured and started via NixOS modules.
+See <a
+href="../nix/test-nixos-configuration.nix">nix/test-nixos-configuration.nix</a>
+for example.</p>
+<h3 id="using-ctls-runtime-overlay">Using CTL’s <code>runtime</code>
+overlay</h3>
+<p>CTL’s <code>overlays.runtime</code> (contained in <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/develop/nix/runtime.nix">runtime.nix</a>)
+provides some mechanisms for conveniently launching all runtime services
+using <a href="https://docs.hercules-ci.com/arion">Arion</a> (itself a
+wrapper around <code>docker-compose</code>). To use this, you must have
+docker installed, the docker deamon running and you must have a setup
+based on Nix flakes (recommended as well for <a
+href="./ctl-as-dependency.html">using CTL as a dependency for Purescript
+projects</a>).</p>
+<p>The project template <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/develop/templates/ctl-scaffold/flake.nix">flake</a>
+uses the <code>runtime</code> overlay to launch all of the required
+services.</p>
+<p>For launching services for developing CTL itself, see our
+documentation on <a
+href="./development.html#launching-services-for-development">development</a>.</p>
+<h3 id="changing-network-configurations">Changing network
+configurations</h3>
+<p>CTL supports using networks other than the public preview testnet to
+provide different development environments.</p>
+<p>To choose a different network, you must specify an alternative way of
+getting the network configuration. The <a
+href="https://github.com/input-output-hk/cardano-configurations">cardano-configurations</a>
+repo provides configs for <code>mainnet</code>, <code>preprod</code> and
+a few other networks. The <code>network.name</code> parameter of
+<code>buildCtlRuntime</code> determines which of the network config
+directories is chosen.</p>
+<p>You can also specify your own fork of
+<code>cardano-configurations</code> like this:</p>
+<pre><code>inputs.cardano-transaction-lib.inputs.cardano-configurations.follows = &quot;...&quot;;</code></pre>
+<p>When changing networks, make sure that <code>network.magic</code> is
+correctly synchronized with value in config (see
+<code>protocolConsts.protocolMagic</code> in
+<code>byron.json</code>).</p>
+<h2 id="blockfrost-backend">Blockfrost Backend</h2>
+<p>See <a href="./blockfrost.html">here</a> for the documentation.</p>
+<h2 id="wallet-requirements">Wallet requirements</h2>
+<p>In order to run most <code>Contract</code> actions in the browser,
+<strong>you must use one of the supported wallets</strong>. The
+following steps must be taken to ensure that you can run CTL
+contracts:</p>
+<ol type="1">
+<li>Make sure that your wallet is running on the testnet (some wallets
+can be configured via a toggle in the settings menu, other provide a
+separate extension)</li>
+<li>Fund the wallet using the <a
+href="https://docs.cardano.org/cardano-testnet/tools/faucet/">Testnet
+Faucet</a></li>
+<li>Make sure that you have set collateral for the wallet, which wallets
+reserve apart from other UTxOs</li>
+</ol>
+</body>
+</html>

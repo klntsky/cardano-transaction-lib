@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CTL Babbage feature overview</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">CTL Babbage feature overview</h1> -->
+</header>
+<h1 id="ctl-babbage-feature-overview">CTL Babbage feature overview</h1>
+<p>This document is a reference/explainer for the new CTL APIs
+introduced for Babbage support.</p>
+<p><strong>Table of contents</strong>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --></p>
+<ul>
+<li><a href="#reference-inputs">Reference Inputs</a></li>
+<li><a href="#reference-scripts">Reference Scripts</a></li>
+<li><a href="#inline-data">Inline Data</a></li>
+<li><a href="#collateral-output">Collateral Output</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="reference-inputs">Reference Inputs</h2>
+<p><a
+href="https://cips.cardano.org/cips/cip31/#referenceinputs">Reference
+inputs</a> allow looking at an output without spending it in Plutus
+scripts.</p>
+<p>There are two ways to use an input as a reference in the constraints
+API:</p>
+<ol type="1">
+<li>via <code>mustReferenceOutput</code>, which allows Plutus scripts to
+access the information (e.g. datum, locked value) contained in the
+output.</li>
+</ol>
+<p><a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/examples/PlutusV2/ReferenceInputs.purs">Usage example</a></p>
+<ol start="2" type="1">
+<li>by providing constraints which accept a value of the type
+<code>InputWithScriptRef</code> with the <code>RefInput</code>
+constructor. These allow scripts (validating or minting) to be reused by
+reference between multiple transactions without including them in those
+transactions, explained further in <a
+href="#reference-scripts">Reference Scripts</a>.</li>
+</ol>
+<p><a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/examples/PlutusV2/ReferenceInputsAndScripts.purs">Usage example</a></p>
+<h2 id="reference-scripts">Reference Scripts</h2>
+<p><a
+href="https://developers.cardano.org/docs/governance/cardano-improvement-proposals/cip-0033/">Reference
+Scripts</a> allows the use of scripts without attaching them to the
+transaction (and using a reference instead).</p>
+<p>Reference scripts can be utilized in CTL by first creating a
+reference point for the script to be used later via
+<code>mustPayToScriptWithScriptRef</code> (or its variants).</p>
+<p>This constraint utilises a new <code>ScriptRef</code> type that
+includes either a native script or a Plutus script.</p>
+<p>Then, <code>mustSpendScriptOutputUsingScriptRef</code> (or its
+variants) can be used to use a reference script. It accepts a value of
+type <code>InputWithScriptRef</code> that specifies whether the UTxO
+with the reference script should be spent or referenced.</p>
+<p><a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/examples/PlutusV2/ReferenceScripts.purs">Usage example</a></p>
+<h2 id="inline-data">Inline Data</h2>
+<p><a
+href="https://developers.cardano.org/docs/governance/cardano-improvement-proposals/cip-0032/">CIP-32</a>
+introduces the inline data feature that allows storing datum values
+directly in transaction outputs, instead of just the hashes.</p>
+<p>In CTL, alternating between datum storage options can be achieved by
+specifying a <code>DatumPresence</code> value with constraints that
+accept it, like <code>mustPayToPubKeyWithDatum</code>.</p>
+<p><a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/examples/PlutusV2/InlineDatum.purs">Usage example</a></p>
+<h2 id="collateral-output">Collateral Output</h2>
+<p><a href="https://cips.cardano.org/cips/cip40/">CIP-40</a> introduces
+explicit collateral output. On validation failure, previously the entire
+collateral was consumed. Now, if excess collateral is supplied, even
+with native assets, the surplus can be returned on validation
+failure.</p>
+<p>Collateral output is automatically added to transactions in CTL. To
+trigger a collateral return, the <code>mustNotBeValid</code> constraint
+should be explicitly specified, otherwise a script error would be
+detected earlier and the transaction will not be sent.</p>
+</body>
+</html>

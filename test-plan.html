@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CTL Test Plan</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">CTL Test Plan</h1> -->
+</header>
+<h1 id="ctl-test-plan">CTL Test Plan</h1>
+<p>This document outlines CTL’s test plan, i.e. a formalized description
+of testing CTL itself.</p>
+<p><strong>Table of Contents</strong></p>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<ul>
+<li><a href="#user-interactions">User interactions</a>
+<ul>
+<li><a href="#constraintslookups">Constraints/lookups</a>
+<ul>
+<li><a href="#stake-operations">Stake operations</a>
+<ul>
+<li><a href="#stake-pools">Stake pools</a></li>
+<li><a href="#stake-credential-registration">Stake credential
+registration</a></li>
+<li><a href="#delegation">Delegation</a></li>
+<li><a href="#rewards-withdrawal">Rewards withdrawal</a></li>
+<li><a href="#stake-credential-deregistration">Stake credential
+deregistration</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#other-functionality">Other functionality</a></li>
+</ul></li>
+<li><a href="#acceptance-criteria">Acceptance criteria</a>
+<ul>
+<li><a href="#example-contracts-as-tests">Example contracts as tests</a>
+<ul>
+<li><a href="#test-environments">Test environments</a></li>
+</ul></li>
+<li><a href="#unit-and-integration-testing">Unit and integration
+testing</a>
+<ul>
+<li><a href="#required-parsing-tests">Required parsing tests</a></li>
+</ul></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="user-interactions">User interactions</h2>
+<p>This section outlines the parts of CTL’s interface that we aim to
+guarantee function as expected. Each of the following functionality
+<strong>must</strong> be covered by an example contract (see our <a
+href="#acceptance-criteria">Acceptance criteria</a> below for more
+details about coverage).</p>
+<h3 id="constraintslookups">Constraints/lookups</h3>
+<p>CTL’s primary user interface is its constraints and lookups API,
+modeled after that of Plutus. We must ensure then that
+<strong>all</strong> of this interface is covered by complete examples
+(see <a href="#acceptance-criteria">Acceptance criteria</a> below for a
+definition of an “example”). Each of the following constraints should be
+covered, along with the lookup that it implies (indicated in parentheses
+where applicable):</p>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustMintValue</code> (<code>mintingPolicy</code>). Also
+implies<ul>
+<li><code>mustMintCurrency</code></li>
+</ul></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustPayToScript</code> (<code>validator</code>)</li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustPayToScriptAddress</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustPayToPubKey</code><ul>
+<li><strong>Note</strong>: This invokes the same code as
+<code>mustPayToPubKeyAddress</code>, but does not include a stake key
+component</li>
+</ul></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustPayToPubKeyAddress</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustMintValueWithRedeemer</code> (<code>mintingPolicy</code>).
+Also implies<ul>
+<li><code>mustMintCurrencyWithRedeemer</code></li>
+</ul></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustSpendScriptOutput</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustSpendPubKeyOutput</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustBeSignedBy</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustHashDatum</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustIncludeDatum</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustPayToPubKeyWithDatum</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustPayToPubKeyAddressWithDatum</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustProduceAtLeastTotal</code>. Also implies<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustProduceAtLeast</code></li>
+</ul></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustSatisfyAnyOf</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustSpendAtLeastTotal</code>. Also implies<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustSpendAtLeast</code></li>
+</ul></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustValidateIn</code></li>
+</ul>
+<p>The following constraints were added for <code>PlutusV2</code>
+features as part of our <code>v2.0.0</code> release. They do not have
+direct correspondances in <code>plutus-apps</code>:</p>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustMintCurrencyUsingScriptRef</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustMintCurrencyWithRedeemerUsingScriptRef</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustPayToScriptWithScriptRef</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustPayToScriptAddressWithScriptRef</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustPayToPubKeyAddressWithDatumAndScriptRef</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustPayToPubKeyAddressWithScriptRef</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustPayToPubKeyWithDatumAndScriptRef</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustPayToPubKeyWithScriptRef</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustReferenceOutput</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustSpendScriptOutputUsingScriptRef</code></li>
+</ul>
+<p>That release also included the following constraints for working with
+native scripts, which also have no <code>plutus-apps</code>
+analogue:</p>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustPayToNativeScript</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustPayToNativeScriptAddress</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mustSpendNativeScriptOutput</code></li>
+</ul>
+<p>In addition, several redeemer combinations in a <strong>single
+transaction</strong> must be covered by tests or examples as well,
+namely</p>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+Two or more <code>Mint</code> redeemers</li>
+<li><input type="checkbox" disabled="" checked="" />
+Two or more <code>Spend</code> redeemers</li>
+<li><input type="checkbox" disabled="" checked="" />
+(At least) One each of a <code>Spend</code> and <code>Mint</code>
+redeemer</li>
+</ul>
+<h4 id="stake-operations">Stake operations</h4>
+<p>New constraints for operations with stake will be added in
+<code>v3</code>.</p>
+<h5 id="stake-pools">Stake pools</h5>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+mustRegisterPool</li>
+<li><input type="checkbox" disabled="" checked="" />
+mustRetirePool</li>
+</ul>
+<h5 id="stake-credential-registration">Stake credential
+registration</h5>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+mustRegisterStakePubKey</li>
+<li><input type="checkbox" disabled="" checked="" />
+mustRegisterStakeScript</li>
+</ul>
+<h5 id="delegation">Delegation</h5>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+mustDelegateStakePubKey</li>
+<li><input type="checkbox" disabled="" checked="" />
+mustDelegateStakePlutusScript</li>
+<li><input type="checkbox" disabled="" checked="" />
+mustDelegateStakeNativeScript</li>
+</ul>
+<h5 id="rewards-withdrawal">Rewards withdrawal</h5>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+mustWithdrawStakePubKey</li>
+<li><input type="checkbox" disabled="" checked="" />
+mustWithdrawStakePlutusScript</li>
+<li><input type="checkbox" disabled="" checked="" />
+mustWithdrawStakeNativeScript</li>
+</ul>
+<h5 id="stake-credential-deregistration">Stake credential
+deregistration</h5>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+mustDeregisterStakePubKey</li>
+<li><input type="checkbox" disabled="" checked="" />
+mustDeregisterStakePlutusScript</li>
+<li><input type="checkbox" disabled="" checked="" />
+mustDeregisterStakeNativeScript</li>
+</ul>
+<h3 id="other-functionality">Other functionality</h3>
+<p>In addition to the constraints/lookups listed above, there are
+several other critical pieces of functionality that CTL must guarantee.
+This functionality is subject to the same criteria as our
+constraints/lookups.</p>
+<ul>
+<li><code>Contract.Transaction.*</code>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+<code>balanceTx</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>signTransaction</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>submit</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>awaitTxConfirmed</code> (implies
+<code>awaitTxConfirmedWithTimeout</code>)</li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>getTxMetadata</code></li>
+</ul></li>
+<li><code>Contract.Scripts.*</code>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+<code>validatorHash</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>mintingPolicy</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>applyArgs</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>getScriptByHash</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>getScriptsByHashes</code></li>
+</ul></li>
+<li><code>Contract.Hashing.*</code>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+<code>datumHash</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>plutusScriptHash</code></li>
+</ul></li>
+<li><code>Contract.PlutusData.*</code>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+<code>getDatumByHash</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>getDatumsByHashes</code></li>
+</ul></li>
+<li><code>Contract.Utxos.*</code>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+<code>utxosAt</code></li>
+</ul></li>
+</ul>
+<h2 id="acceptance-criteria">Acceptance criteria</h2>
+<p>Coverage of particular functionality is measured by the inclusion of
+the <strong>public</strong> interface in full example contracts and
+tests. CTL’s public API is defined in its <code>Contract.*</code>
+modules.</p>
+<p>Most user interactions defined <a href="#user-interactions">above</a>
+also call various parsers and serialization/deserialization code defined
+in CTL’s private/internal modules. Acceptance criteria for these aspects
+of CTL are defined in <a href="#unit-and-integration-testing">Unit
+testing</a> below.</p>
+<h3 id="example-contracts-as-tests">Example contracts as tests</h3>
+<p>In the case of CTL’s constraints/lookups API, in order to be
+qualified as “covered”, the relevant part of the API
+<strong>must</strong> be included in a <strong>complete example</strong>
+(such examples are currently contained in our <a
+href="../examples"><code>examples/</code></a> directory). Such examples
+must successfully</p>
+<ul>
+<li>build an unbalanced transaction specified using the
+constraints/lookups interface
+<ul>
+<li><strong>Note</strong>: For implemented transaction features
+<em>not</em> supported by our current constraints/lookups
+implementation, such as the features introduced by CIPs 31-33 (inline
+datums, etc…), modifying the transaction directly is also
+acceptable</li>
+</ul></li>
+<li>balance the transaction while calculating sufficient fees/execution
+units</li>
+<li>sign the transaction using the attached wallet (either a
+browser-based light wallet or our own <code>KeyWallet</code>)</li>
+<li>submit the transaction to the node</li>
+</ul>
+<p>The functionality to achieve the above <strong>must</strong> be taken
+from our public API. That is, we must consume the public interface
+directly in all example contracts rather than importing internal CTL
+modules (anything outside of <code>Contract.*</code>).</p>
+<h4 id="test-environments">Test environments</h4>
+<p>Furthermore, <strong>all</strong> example contracts must be able to
+execute in both of the environments that CTL supports. The following
+sections will refer to two different approachs for testing CTL:</p>
+<ul>
+<li><strong>Plutip</strong> testing
+<ul>
+<li>This represents CTL’s support for running in a Node.js environment
+(for <code>KeyWallet</code> examples), without a browser or light
+wallet</li>
+<li>These examples must use our Plutip integrations
+(<code>Contract.Test.Plutip</code> and
+<code>purescriptProject.runPlutipTest</code> from our Nix
+infrastructure)</li>
+<li>As these do not require network access, they can be executed in an
+entirely pure environment</li>
+<li>These must be run on CI on each pull request against the CTL
+repository using <code>runPlutipTest</code> by adding the contract to
+<code>Test.Plutip</code></li>
+</ul></li>
+<li><strong>e2e</strong> (end-to-end) testing
+<ul>
+<li>This represents our browser integration and uses real light wallets
+and a public testnet</li>
+<li><strong>All</strong> currently supported wallets must be tested
+against each example contract</li>
+<li>In the future, all e2e tests using real light wallets and a headless
+Chromium instance might also be run on CI</li>
+<li>See <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/issues/929">issue
+#929</a> for more details</li>
+</ul></li>
+</ul>
+<p>Example contracts should be implemented such that the same contract
+can be reused in both environments. An example module might look
+like:</p>
+<pre class="purescript"><code>
+module Examples.MintsToken
+  ( example
+  ) where
+
+import Contract.Prelude
+
+import Contract.Config (ContractParams)
+import Contract.Log (logInfo&#39;)
+import Contract.Monad (launchAff_)
+
+example :: ContractParams -&gt; Effect Unit
+example cfg = launchAff_ do
+  runContract cfg do
+    logInfo&#39; &quot;Running Examples.MintsToken&quot;
+    -- rest of the contract</code></pre>
+<p>Then, the exported <code>example</code> must be added to
+<code>Examples.ByUrl</code> to be run with <code>make e2e-test</code>.
+In some cases, it can be reused directly in a Plutip test (contained in
+the module <code>Test.Plutip</code>); in other cases, an indentical
+contract can be reimplemented inline in the Plutip test suite.</p>
+<p>The <strong>only</strong> exception to the above rule is when the
+particulars of a contract preclude running it in one of the
+environments. For example, a contract that requires interaction between
+two or more wallets cannot currently be adapted to our e2e testing (as
+it assumes one connected wallet with one account).</p>
+<h3 id="unit-and-integration-testing">Unit and integration testing</h3>
+<p>CTL relies heavily on various runtime components to provide the
+necessary information to perform chain queries and construct
+transactions. We depend on a large amount of parsers, including
+serialization/deserialization code (i.e. to and from CTL’s own domain
+type to <code>cardano-serialization-lib</code> FFI types), to consume
+the responses to websocket and HTTP requests made against CTL’s
+runtime.</p>
+<p>Although such parsers are included implicitly in the example
+contracts defined above, we must also ensure good coverage of edge cases
+that may arise when making runtime requests. Our approach to such
+testing can be formalized as:</p>
+<ul>
+<li><strong>Unit tests</strong>
+<ul>
+<li>These tests rely on fixtures generated from runtime responses (see
+<a href="../fixtures/test"><code>fixtures/</code></a> for examples),
+stored in the same format as they are received in genuine responses</li>
+<li>The corresponding tests can be largely pure functions which read the
+fixture and parse it</li>
+<li>Success is defined as a parse returning a <code>Just</code> or
+<code>Right</code> value, depending on the parser
+<ul>
+<li>Due to the large number and semi-random nature of our test fixtures,
+we do not require comparing parsed values to an expected result</li>
+</ul></li>
+<li>If possible, we should validate a parser against a component’s
+<em>own</em> test fixtures
+<ul>
+<li>See <code>Test.Ogmios.GenerateFixtures</code> for an example of this
+approach, which uses Ogmios’ generated test vectors for our own
+testing</li>
+</ul></li>
+</ul></li>
+<li><strong>Integration tests</strong>
+<ul>
+<li>These tests are run against a full runtime and make real requests to
+different components</li>
+<li>These are intended to augment the unit tests described above and are
+a step below our full example contracts</li>
+<li>These can be effects from the <code>Contract</code> interface and
+the underlying backends</li>
+</ul></li>
+</ul>
+<h4 id="required-parsing-tests">Required parsing tests</h4>
+<p>Currently, we require parsing tests for the following data
+structures, organized by dependency (including runtime
+dependencies):</p>
+<ul>
+<li>Ogmios
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+<code>ChainTipQR</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>CurrentEpoch</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>SystemStart</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>EraSummaries</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>ProtocolParameters</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>TxEvaluationR</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>SubmitTxR</code></li>
+</ul></li>
+<li><code>cardano-serialization-lib</code>
+<ul>
+<li><code>Transaction</code>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+Serialization</li>
+<li><input type="checkbox" disabled="" checked="" />
+Deserialization</li>
+</ul></li>
+<li><code>TxBody</code>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+Serialization</li>
+<li><input type="checkbox" disabled="" checked="" />
+Deserialization</li>
+</ul></li>
+<li><code>TransactionWitnessSet</code>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+Serialization</li>
+<li><input type="checkbox" disabled="" checked="" />
+Deserialization</li>
+</ul></li>
+</ul></li>
+<li>Kupo
+<ul class="task-list">
+<li><input type="checkbox" disabled="" />
+<code>KupoUtxoMap</code></li>
+<li><input type="checkbox" disabled="" />
+<code>KupoDatum</code></li>
+<li><input type="checkbox" disabled="" />
+<code>KupoScriptRef</code></li>
+<li><input type="checkbox" disabled="" />
+<code>KupoUtxoSlot</code></li>
+<li><input type="checkbox" disabled="" />
+<code>KupoMetadata</code></li>
+</ul></li>
+<li>Blockfrost
+<ul>
+<li>TODO</li>
+</ul></li>
+</ul>
+</body>
+</html>

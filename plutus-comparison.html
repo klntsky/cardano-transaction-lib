@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Comparing CTL and Plutus</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+      }
+    pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { font-weight: bold; } /* Alert */
+    code span.an { font-style: italic; } /* Annotation */
+    code span.cf { font-weight: bold; } /* ControlFlow */
+    code span.co { font-style: italic; } /* Comment */
+    code span.cv { font-style: italic; } /* CommentVar */
+    code span.do { font-style: italic; } /* Documentation */
+    code span.dt { text-decoration: underline; } /* DataType */
+    code span.er { font-weight: bold; } /* Error */
+    code span.in { font-style: italic; } /* Information */
+    code span.kw { font-weight: bold; } /* Keyword */
+    code span.pp { font-weight: bold; } /* Preprocessor */
+    code span.wa { font-style: italic; } /* Warning */
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">Comparing CTL and Plutus</h1> -->
+</header>
+<h1 id="comparing-ctl-and-plutus">Comparing CTL and Plutus</h1>
+<p>This document outlines the core differences between CTL and Plutus
+(particularly in the context of the Plutus Application Backend [PAB]).
+CTL is of course directly inspired by Plutus and PAB and we have
+attempted to preserve a high degree of similarity between the two APIs.
+In many cases, it should be possible to copy-paste existing code written
+for PAB deployments and adjust it for CTL fairly easily (accounting of
+course for existing differences between Haskell and Purescript).
+Nevertheless, CTL and Plutus differ in several important ways, as
+outlined below.</p>
+<p>Note that differences between Haskell and Purescript, while also
+relevant to such a comparison, is beyond the scope of this document
+unless such differences have a direct bearing on divergences between the
+two CTL and Plutus.</p>
+<p><strong>Table of Contents</strong>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --></p>
+<ul>
+<li><a href="#core-conceptual-differences">Core conceptual
+differences</a>
+<ul>
+<li><a href="#library-vs-process">Library vs. process</a></li>
+<li><a href="#the-contract-type">The <code>Contract</code> type</a></li>
+</ul></li>
+<li><a href="#api-differences">API differences</a>
+<ul>
+<li><a href="#transaction-manipulation-api">Transaction manipulation
+API</a></li>
+<li><a href="#constraints-and-lookups">Constraints and lookups</a>
+<ul>
+<li><a href="#babbage-era-constraints">Babbage-era constraints</a></li>
+</ul></li>
+<li><a href="#typed-scripts">Typed scripts</a></li>
+<li><a href="#working-with-scripts">Working with scripts</a>
+<ul>
+<li><a href="#using-scripts-from-the-frontend">Using scripts from the
+frontend</a></li>
+<li><a href="#applying-arguments-to-parameterized-scripts">Applying
+arguments to parameterized scripts</a></li>
+</ul></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="core-conceptual-differences">Core conceptual differences</h2>
+<h3 id="library-vs.-process">Library vs. process</h3>
+<p>Unlike contracts written for PAB, which are compiled to a single
+process, CTL is a library. CTL itself can be <a
+href="./ctl-as-dependency.html">imported as a Purescript library</a> and
+contracts written in CTL compile to Javascript that can be run in the
+browser or NodeJS. Accordingly, there is no need to activate endpoints
+in CTL – contracts are executed by calling effectful functions written
+using the library. This distinction has influenced our adaption of
+Plutus’ <code>Contract</code> type, as outlined <a
+href="#the-contract-type">below</a>.</p>
+<p>Note, however, that CTL still requires a number of runtime
+dependencies. In some respects, this is similar to PAB, which also needs
+to communicate with plutus-chain-index and a running node. Please see
+the <a href="./runtime.html">documentation</a> for more details on CTL’s
+runtime.</p>
+<h3 id="the-contract-type">The <code>Contract</code> type</h3>
+<p>Both CTL and Plutus define <code>Contract</code> monads for
+constructing, balancing, and submitting transactions. There are
+considerable differences between the two, however:</p>
+<p><strong>CTL</strong>:</p>
+<pre class="purescript"><code>newtype Contract (a :: Type) = Contract (ReaderT ContractEnv Aff a)</code></pre>
+<p>where</p>
+<ul>
+<li><code>ContractEnv</code> is an internal type containing references
+to various backend services, configurations and ledger constants</li>
+<li><code>Aff</code> (Purescript’s monad for asynchronous effects, with
+no Haskell analogue, the closest being IO).</li>
+</ul>
+<p><strong>Plutus</strong>:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">newtype</span> <span class="dt">Contract</span> (<span class="ot">w ::</span> <span class="dt">Type</span>) (<span class="ot">s ::</span> <span class="dt">Row</span> <span class="dt">Type</span>) (<span class="ot">e ::</span> <span class="dt">Type</span>) (<span class="ot">a ::</span> <span class="dt">Type</span>) <span class="ot">=</span> <span class="dt">Contract</span> { <span class="op">...</span> }</span></code></pre></div>
+<p>where</p>
+<ul>
+<li><code>(w :: Type)</code> is usually some <code>Monoid</code> used
+for <code>Writer</code>-like effects</li>
+<li><code>(s :: Row Type)</code> (note that <code>Row</code> comes from
+the <code>row-types</code> package) represents the contract schema</li>
+<li><code>(e :: Type)</code> represents the errors that the contract can
+throw</li>
+</ul>
+<p>As this direct comparison illustrates, CTL’s <code>Contract</code> is
+significantly simpler than Plutus’. Importantly, CTL’s
+<code>Contract</code> <strong>allows for arbitrary effects</strong>.
+This makes <code>Writer</code> capabilities redundant in CTL, for
+instance, as all communication between <code>Contract</code>s can be
+done in a more direct manner (e.g. logging or HTTP calls).</p>
+<p>CTL also has no concept of a “schema” for <code>Contract</code>s as
+there is no equivalent of an endpoint as in PAB. That is, effects
+written in <code>Contract</code> are not activated in some way and can
+instead be called normally from Purescript code.</p>
+<p>For library users, CTL’s <code>Contract</code> is less opaque than
+Plutus’. The <code>Contract</code> newtype can be unwrapped to expose
+the inner monad transformer stack, whose internal structure will be
+immediately recognizable to developers familiar
+<code>transformers</code>-style stacks. <code>Contract</code> also has
+instances for various typeclasses, making it possible to write
+<code>mtl</code>-style effects.</p>
+<p>In contrast to the free-monad approach used by Plutus, CTL’s
+<code>Contract</code> has uses a standard monadic eliminator to execute
+its effects (<code>Contract.Monad.runContract</code>), keeping with its
+more conventional transformer-oriented structure.</p>
+<p>Finally, CTL’s <code>Contract</code> is not parameterized by an error
+type as in Plutus. <code>Contract</code> actions defined by the library
+signal failure in various ways (e.g. returning <code>Either</code>s,
+<code>Maybe</code>s, or in the case of unrecoverable errors, throwing
+exceptions). Standardizing our error-handling approach is on our roadmap
+for future releases, however, most likely with a standardized error type
+containing polymorphic variants so that users may freely extend existing
+errors in the <code>Contract</code> interface.</p>
+<h2 id="api-differences">API differences</h2>
+<h3 id="transaction-manipulation-api">Transaction manipulation API</h3>
+<table>
+<thead>
+<tr class="header">
+<th>Plutus</th>
+<th>CTL</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>submitTxConstraintsWith</code></td>
+<td><code>submitTxFromConstraints</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="constraints-and-lookups">Constraints and lookups</h3>
+<p>CTL has adapted Plutus’ Alonzo-era constraints/lookups interface
+fairly closely and it functions largely the same. One key difference is
+that CTL does not, and cannot, have the notion of a “current” script.
+All scripts must be explicitly provided to CTL (serialized as CBOR, see
+below). This has led us to depart from Plutus’ naming conventions for
+certain constraints/lookups:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Plutus</th>
+<th>CTL</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>mustPayToTheScript</code></td>
+<td><em>removed</em></td>
+</tr>
+<tr class="even">
+<td><code>mustPayToOtherScript</code></td>
+<td><code>mustPayToScript</code></td>
+</tr>
+<tr class="odd">
+<td><code>otherScript</code></td>
+<td><code>validator</code></td>
+</tr>
+<tr class="even">
+<td><code>otherData</code></td>
+<td><code>datum</code></td>
+</tr>
+<tr class="odd">
+<td><em>none</em></td>
+<td><code>mustPayToNativeScript</code></td>
+</tr>
+<tr class="even">
+<td><em>none</em></td>
+<td><code>mustSpendNativeScriptOutput</code></td>
+</tr>
+</tbody>
+</table>
+<p>Additionally, we implement <code>NativeScript</code> (multi-signature
+phase-1 script) support, which is not covered by Plutus.</p>
+<h4 id="babbage-era-constraints">Babbage-era constraints</h4>
+<p>CIPs 0031-0033 brought several improvements to Plutus and are
+supported from the Babbage era onwards:</p>
+<ul>
+<li><a
+href="https://github.com/cardano-foundation/CIPs/tree/master/CIP-0031">Reference
+inputs</a></li>
+<li><a
+href="https://github.com/cardano-foundation/CIPs/tree/master/CIP-0032">Inline
+datums</a></li>
+<li><a
+href="https://github.com/cardano-foundation/CIPs/tree/master/CIP-0033">Reference
+scripts</a></li>
+</ul>
+<p>CTL has upgraded its constraints interface to work with these new
+features. At the time of writing, however, <code>plutus-apps</code> has
+not yet upgraded their constraints/lookups interface to support these
+new features. This means a direct comparison between
+<code>plutus-apps</code> and CTL regarding Babbage-era features is not
+currently possible. It also implies that, moving forward, CTL’s
+constraints implementation will increasingly no longer match that of
+<code>plutus-apps</code>’ to the same degree.</p>
+<h3 id="typed-scripts">Typed scripts</h3>
+<p>Another difference between Plutus and CTL is our implementation of
+typed scripts. Recall that Plutus’ <code>ValidatorTypes</code>
+class:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="dt">ValidatorTypes</span> (<span class="ot">a ::</span> <span class="dt">Type</span>) <span class="kw">where</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">type</span> <span class="dt">RedeemerType</span><span class="ot"> a ::</span> <span class="dt">Type</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">type</span> <span class="dt">DatumType</span><span class="ot"> a ::</span> <span class="dt">Type</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">type</span> <span class="kw">instance</span> <span class="dt">RedeemerType</span> a <span class="ot">=</span> ()</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">type</span> <span class="kw">instance</span> <span class="dt">DatumType</span>  a <span class="ot">=</span> ()</span></code></pre></div>
+<p>Purescript lacks most of Haskell’s more advanced type-level
+faculties, including type/data families. Purescript does, however,
+support functional dependencies, allowing us to encode
+<code>ValidatorTypes</code> as follows:</p>
+<pre class="purescript"><code>class ValidatorTypes :: Type -&gt; Type -&gt; Type -&gt; Constraint
+class
+  ( DatumType validator datum
+  , RedeemerType validator redeemer
+  ) &lt;=
+  ValidatorTypes validator datum redeemer
+
+class DatumType :: Type -&gt; Type -&gt; Constraint
+class DatumType validator datum | validator -&gt; datum
+
+class RedeemerType :: Type -&gt; Type -&gt; Constraint
+class RedeemerType validator redeemer | validator -&gt; redeemer</code></pre>
+<h3 id="working-with-scripts">Working with scripts</h3>
+<h4 id="using-scripts-from-the-frontend">Using scripts from the
+frontend</h4>
+<p>As noted above, all scripts and various script newtypes
+(<code>Validator</code>, <code>MintingPolicy</code>, etc…) must be
+explicitly passed to CTL. Unlike Plutus, where on- and off-chain code
+can freely share Haskell values, scripts must be provided to CTL in a
+serialized format. The easiest way to do this is using
+<code>Contract.TextEnvelope.textEnvelope</code> along with the JS FFI.
+See the <a href="getting-started.html#using-compiled-scripts">getting
+started guide</a> for more details.</p>
+<h4 id="applying-arguments-to-parameterized-scripts">Applying arguments
+to parameterized scripts</h4>
+<p>We support applying arguments to parameterized scripts with
+<code>Contract.Scripts.applyArgs</code>. It allows you to apply a list
+of <code>PlutusData</code> arguments to a <code>PlutusScript</code>.
+Using this allows you to dynamically apply arguments during contract
+execution, but also implies the following:</p>
+<ul>
+<li><p>All of your domain types must have
+<code>Contract.PlutusData.ToData</code> instances (or some other way of
+converting them to <code>PlutusData</code>)</p></li>
+<li><p>You must employ a workaround, illustrated by the following
+examples, in your off-chain code to ensure that the applied scripts are
+valid for both on- and off-chain code. This essentially consists of
+creating an wrapper which accepts <code>Data</code> arguments for your
+parameterized scripts:</p>
+<ul>
+<li><p>PlutusTx:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ot">mkTestValidator ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">BuiltinData</span> <span class="ot">-&gt;</span> <span class="dt">BuiltinData</span> <span class="ot">-&gt;</span> <span class="dt">BuiltinData</span> <span class="ot">-&gt;</span> ()</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>mkTestValidator _ _ _ _ <span class="ot">=</span> ()</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="co">-- This is the wrapper function</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="ot">mkTestValidatorUntyped ::</span> <span class="dt">BuiltinData</span> <span class="ot">-&gt;</span> <span class="dt">BuiltinData</span> <span class="ot">-&gt;</span> <span class="dt">BuiltinData</span> <span class="ot">-&gt;</span> <span class="dt">BuiltinData</span> <span class="ot">-&gt;</span> ()</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>mkTestValidatorUntyped p <span class="ot">=</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  mkTestValidator</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    (unsafeFromBuiltinData p)</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="ot">testScript ::</span> <span class="dt">Script</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>testScript <span class="ot">=</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  fromCompiledCode</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="op">$$</span>(PlutusTx.compile [<span class="op">||</span> mkTestValidatorUntyped <span class="op">||</span>])</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="ot">testValidator ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Validator</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>testValidator params <span class="ot">=</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  mkValidatorScript</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="co">-- `toBuiltinData` is redundant here but it makes the signature match</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  (<span class="op">$$</span>(PlutusTx.compile [<span class="op">||</span> mkTestValidatorUntyped <span class="op">||</span>]) <span class="ot">`PlutusTx.applyCode`</span> PlutusTx.liftCode (PlutusTx.toBuiltinData params))</span></code></pre></div></li>
+<li><p>Plutarch:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ot">mkTestValidator ::</span> <span class="dt">Term</span> s (<span class="dt">PInteger</span> <span class="op">:--&gt;</span> <span class="dt">PData</span> <span class="op">:--&gt;</span> <span class="dt">PData</span> <span class="op">:--&gt;</span> <span class="dt">PScriptContext</span> <span class="op">:--&gt;</span> <span class="dt">POpaque</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>mkTestValidator <span class="ot">=</span> plam <span class="op">$</span> \_i _datm _redm _ctx <span class="ot">-&gt;</span> popaque <span class="op">$</span> pconstant ()</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="ot">mkTestValidatorUntyped ::</span> <span class="dt">Term</span> s (<span class="dt">PData</span> <span class="op">:--&gt;</span> <span class="dt">PData</span> <span class="op">:--&gt;</span> <span class="dt">PData</span> <span class="op">:--&gt;</span> <span class="dt">PScriptContext</span> <span class="op">:--&gt;</span> <span class="dt">POpaque</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>mkTestValidatorUntyped <span class="ot">=</span> plam <span class="op">$</span> \iData <span class="ot">-&gt;</span> ptryFrom <span class="op">@</span>(<span class="dt">PAsData</span> <span class="dt">PInteger</span>) iData <span class="op">$</span> \(_, i) <span class="ot">-&gt;</span> mkTestValidator <span class="op">#</span> i</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="ot">testScript ::</span> <span class="dt">Script</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>testScript <span class="ot">=</span> compile mkTestValidatorUntyped</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a><span class="ot">testValidator ::</span> <span class="dt">Integer</span> <span class="ot">-&gt;</span> <span class="dt">Validator</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>testValidator i <span class="ot">=</span> mkValidator <span class="op">$</span> mkTestValidator <span class="op">#</span> pconstant i</span></code></pre></div></li>
+</ul></li>
+</ul>
+</body>
+</html>

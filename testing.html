@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Testing CTL Contracts</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">Testing CTL <code>Contract</code>s</h1> -->
+</header>
+<!-- DOCTOC SKIP -->
+<h1 id="testing-ctl-contracts">Testing CTL <code>Contract</code>s</h1>
+<p>This page summarizes various approaches to testing with CTL.</p>
+<h2 id="testing-with-plutip">Testing with Plutip</h2>
+<p>Plutip is a tool that allows to manage temporary
+<code>cardano-node</code> clusters. CTL has a test engine that controls
+these clusters and runs users’ <code>Contract</code>s in their
+disposable environment. No setup is needed.</p>
+<p><a href="./plutip-testing.html">See here for more info</a>.</p>
+<h2 id="testing-with-a-headless-browser-e2e-testing">Testing with a
+headless browser (E2E testing)</h2>
+<p>“E2E test engine”, in our terminology, is a set of APIs we provide to
+faciliate running tests in real browsers in headless mode. The test
+engine handles browser startup, interaction with the page, and, most
+importantly, it clicks through the wallet UI when there is a need to
+confirm transactions.</p>
+<p><a href="./e2e-testing.html">See here for more info</a></p>
+<h2 id="key-wallets">Key wallets</h2>
+<p>Key wallet is a special kind of wallet that simply wraps a private
+key.</p>
+<p>See <code>Contract.Wallet.Key</code> and
+<code>Contract.Wallet.KeyFile</code> for its interface.</p>
+<h2 id="cip-30-mocking">CIP-30 mocking</h2>
+<p>It is possible to test <code>Contract</code>s that explicitly use
+wallet connections in NodeJS environment. But actual wallet calls will
+be replaced by mock methods.</p>
+<p>See <code>Contract.Test.Cip30Mock</code> module.</p>
+<h2 id="plutip-and-cip-30-mocking-in-headless-browsers">Plutip and
+CIP-30 mocking in headless browsers</h2>
+<p>We also provide abilities to test <code>Contract</code>s in a
+headless browser using query layer of a temporary Plutip cluster as
+backend and CIP-30 mock instead of a wallet. This method provides
+stronger guarantees than just CIP-30 mocking in NodeJS, while retaining
+the ability to be used in Nix builds (by not depending on a real light
+wallet extension).</p>
+<p><a href="./e2e-testing.html#using-cip-30-mock-with-plutip">See here
+for more info</a>.</p>
+<h2 id="assertion-helpers-in-purescript">Assertion helpers in
+PureScript</h2>
+<p>Assertion utilities in PureScript can be used in any testing
+environment, because they work in <code>Contract</code> monad. It is
+possible to define dynamic properties, like asset gains or script
+execution budgets.</p>
+<p><a href="./test-utils.html">See here for more info</a></p>
+</body>
+</html>

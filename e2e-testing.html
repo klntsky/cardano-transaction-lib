@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>E2E Testing in the Browser</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+      }
+    pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { font-weight: bold; } /* Alert */
+    code span.an { font-style: italic; } /* Annotation */
+    code span.cf { font-weight: bold; } /* ControlFlow */
+    code span.co { font-style: italic; } /* Comment */
+    code span.cv { font-style: italic; } /* CommentVar */
+    code span.do { font-style: italic; } /* Documentation */
+    code span.dt { text-decoration: underline; } /* DataType */
+    code span.er { font-weight: bold; } /* Error */
+    code span.in { font-style: italic; } /* Information */
+    code span.kw { font-weight: bold; } /* Keyword */
+    code span.pp { font-weight: bold; } /* Preprocessor */
+    code span.wa { font-style: italic; } /* Warning */
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">E2E Testing in the Browser</h1> -->
+</header>
+<h1 id="e2e-testing-in-the-browser">E2E Testing in the Browser</h1>
+<p>CTL comes with advanced machinery for E2E testing in the browser,
+which can be used to either run the included examples (in
+<code>examples</code>) or create a custom test suite for E2E
+testing.</p>
+<p><strong>Table of Contents</strong></p>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<ul>
+<li><a href="#parts-involved">Parts Involved</a></li>
+<li><a href="#user-perspective">User perspective</a></li>
+<li><a href="#how-to-run-the-included-examples">How to Run the Included
+Examples</a></li>
+<li><a href="#how-wallets-are-used">How Wallets are Used</a>
+<ul>
+<li><a href="#where-to-find-the-installed-extensions">Where to Find the
+Installed Extensions</a></li>
+<li><a href="#how-to-use-a-different-user-wallet">How to Use a Different
+User Wallet</a></li>
+</ul></li>
+<li><a href="#using-a-reproducible-chromium-version">Using a
+reproducible <code>chromium</code> version</a></li>
+<li><a href="#configuring-e2e-test-suite">Configuring E2E test
+suite</a></li>
+<li><a href="#creating-a-custom-test-suite">Creating a custom test
+suite</a>
+<ul>
+<li><a href="#how-to-configure-the-wallet">How to configure the
+wallet</a></li>
+<li><a href="#re-packing-an-extension-as-a-crx-file">Re-Packing an
+Extension as a CRX File</a></li>
+<li><a href="#getting-the-extension-id">Getting the extension
+ID</a></li>
+<li><a href="#using-custom-unauthorized-extensions">Using custom
+unauthorized extensions</a></li>
+<li><a href="#serving-the-contract-to-be-tested">Serving the Contract to
+be tested</a></li>
+<li><a href="#mocking-cip-30-interface">Mocking CIP-30
+interface</a></li>
+<li><a href="#using-cip-30-mock-with-plutip">Using CIP-30 mock with
+Plutip</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="parts-involved">Parts Involved</h2>
+<p><a href="https://github.com/puppeteer/puppeteer">Puppeteer</a>
+(driven by <a
+href="https://github.com/justinwoo/purescript-toppokki">Toppokki</a>) is
+used to drive the tests. Supported browsers are <a
+href="https://www.chromium.org/">Chromium</a> and Google Chrome. The
+browser can be run headless (default) or headful (useful during test
+development).</p>
+<p>Any <code>Contract</code> that should be tested must be deployed and
+running on some testserver (e.g. for the included examples we use
+<code>npm run e2e-test</code>). The test suite accepts a list of
+URLs.</p>
+<p>The test suite requires a set of CRX (chrome extension) files, as
+well as an archive with user settings. Extension and wallet settings can
+optionally be configured to be fetched from a URL.</p>
+<p>Each extension should be provided with its extension ID and wallet
+password.</p>
+<p>For a working example see <code>test/E2E.purs</code>. It can be run
+conveniently using <code>npm run e2e-test</code>.</p>
+<h2 id="user-perspective">User perspective</h2>
+<ul>
+<li>Use <code>npm run e2e-serve</code> to <a
+href="#serving-the-contract-to-be-tested">serve</a> the examples for
+testing.</li>
+<li>Use <code>npm run e2e-test</code> to run the test suite in headless
+mode or <code>npm run e2e-test-debug</code> to enable the browser
+UI.</li>
+<li>Use <code>npm run e2e-browser</code> to open the browser window with
+extensions pre-loaded. If you modify any setting (e.g. set a
+collateral), it’s important to run
+<code>npm run e2e-pack-settings</code> <strong>without running anything
+in between</strong>. The test suite resets the settings by loading them
+from the settings archive before each test run.</li>
+<li>To <a href="#how-wallets-are-used">pack and unpack</a> extension
+settings to or from the archive file
+<code>npm run e2e-pack-settings</code> and
+<code>npm run e2e-unpack-settings</code> scripts should be used,
+respectively.</li>
+</ul>
+<h2 id="how-to-run-the-included-examples">How to Run the Included
+Examples</h2>
+<p>The process is as follows:</p>
+<ol type="1">
+<li>run <code>npm run e2e-serve</code> in one shell</li>
+<li>run <code>nix run -L .#ctl-runtime</code> in another shell</li>
+<li>run <code>npm run e2e-test</code> in the third shell</li>
+</ol>
+<h2 id="how-wallets-are-used">How Wallets are Used</h2>
+<p>For purposes of testing, there are two parts to using a wallet:
+providing the right software version and importing a wallet with enough
+tAda and a known password.</p>
+<ul>
+<li>The software just needs to be unpacked to some directory. This can
+either be the location where the browser unpacks it, or the result of
+unpacking a CRX file (see below).</li>
+<li>We provide the wallet data as a single tarball which will be
+unpacked into the chrome profile before a test run
+(<code>test-data/settings.tar.gz</code>)</li>
+</ul>
+<h3 id="where-to-find-the-installed-extensions">Where to Find the
+Installed Extensions</h3>
+<ol type="1">
+<li>Locate your browser profile directory. Commonly used locations
+include: <code>~/.config/{google-chrome,chromium}/Default</code> (where
+<code>Default</code> is the profile name),
+<code>~/snap/chromium/common/chromium/Default</code>.</li>
+<li>Make sure that inside the profile, your desired extension is
+unpacked. Nami should be in
+<code>Extensions/lpfcbjknijpeeillifnkikgncikgfhdo</code>, Gero (testnet
+version) in
+<code>Extensions/iifeegfcfhlhhnilhfoeihllenamcfgc</code>.</li>
+<li>Add the version as a subdirectory, too. The final path may look like
+<code>/home/user/.config/google-chrome/Default/Extensions/iifeegfcfhlhhnilhfoeihllenamcfgc/1.10.9_0</code></li>
+</ol>
+<h3 id="how-to-use-a-different-user-wallet">How to Use a Different User
+Wallet</h3>
+<p>In the test suite, the wallet settings are just unpacked using
+<code>tar</code>.</p>
+<p>A new settings tarball can be easily created:</p>
+<ol type="1">
+<li>Run the browser with <code>npm run e2e-browser</code></li>
+<li>Set up a wallet extension, create and fund the wallet, and set the
+collateral.</li>
+<li>Close the browser.</li>
+<li>Run <code>npm run e2e-pack-settings</code>. The file located at
+<code>test-data/settings.tar.gz</code> will be updated.</li>
+</ol>
+<h2 id="using-a-reproducible-chromium-version">Using a reproducible
+<code>chromium</code> version</h2>
+<p>Although most users will have some version of Chromium or Google
+Chrome installed system-wide, it can be a good idea to use the same
+version for all e2e testing. When creating your project’s
+<code>devShell</code> using <code>purescriptProject</code>, you can set
+the <code>shell.withChromium</code> flag to <code>true</code> to include
+it in the shell’s packages. This will be the version of
+<code>chromium</code> present in the <code>nixpkgs</code> you pass to
+create your project:</p>
+<pre class="nix"><code>{
+  projectFor = system:
+    let
+      pkgs = nixpkgsFor system;
+    in
+    pkgs.purescriptProject {
+      inherit pkgs;
+      projectName = &quot;my-project&quot;;
+      shell = {
+        withChromium = true;
+        # ...
+      };
+      # ...
+    };
+}</code></pre>
+<h2 id="configuring-e2e-test-suite">Configuring E2E test suite</h2>
+<p>The tests can set up using CLI arguments, environment variables, or
+both. CLI arguments have higher priority.</p>
+<table>
+<colgroup>
+<col style="width: 38%" />
+<col style="width: 31%" />
+<col style="width: 30%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Parameter</th>
+<th>CLI argument</th>
+<th>Environment variable</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Temporary directory</td>
+<td><code>--tmp-dir</code></td>
+<td><code>E2E_TMPDIR</code></td>
+</tr>
+<tr class="even">
+<td>Test specs (<code>wallet:url</code> format)</td>
+<td><code>--test</code> (multiple allowed)</td>
+<td><code>E2E_TESTS</code></td>
+</tr>
+<tr class="odd">
+<td>Test timeout</td>
+<td><code>--test-timeout</code></td>
+<td><code>E2E_TEST_TIMEOUT</code></td>
+</tr>
+<tr class="even">
+<td>Browser binary path or name</td>
+<td><code>--browser</code></td>
+<td><code>E2E_BROWSER</code></td>
+</tr>
+<tr class="odd">
+<td>Don’t use headless mode</td>
+<td><code>--no-headless</code></td>
+<td><code>E2E_NO_HEADLESS</code></td>
+</tr>
+<tr class="even">
+<td>Path to the user settings archive</td>
+<td><code>--settings-archive</code></td>
+<td><code>E2E_SETTINGS_ARCHIVE</code></td>
+</tr>
+<tr class="odd">
+<td>URL of settings archive asset</td>
+<td><code>--settings-archive-url</code></td>
+<td><code>E2E_SETTINGS_ARCHIVE_URL</code></td>
+</tr>
+<tr class="even">
+<td>Path to the user data directory</td>
+<td><code>--chrome-user-data</code></td>
+<td><code>E2E_CHROME_USER_DATA</code></td>
+</tr>
+<tr class="odd">
+<td>Extra browser CLI arguments</td>
+<td><code>--extra-browser-args</code></td>
+<td><code>E2E_EXTRA_BROWSER_ARGS</code></td>
+</tr>
+<tr class="even">
+<td>Eternl CRX URL</td>
+<td><code>--eternl-crx-url</code></td>
+<td><code>ETERNL_CRX_URL</code></td>
+</tr>
+<tr class="odd">
+<td>Eternl CRX file</td>
+<td><code>--eternl-crx</code></td>
+<td><code>ETERNL_CRX</code></td>
+</tr>
+<tr class="even">
+<td>Eternl password</td>
+<td><code>--eternl-password</code></td>
+<td><code>ETERNL_PASSWORD</code></td>
+</tr>
+<tr class="odd">
+<td>Eternl Extension ID</td>
+<td><code>--eternl-extid</code></td>
+<td><code>ETERNL_EXTID</code></td>
+</tr>
+<tr class="even">
+<td>Lode CRX URL</td>
+<td><code>--lode-crx-url</code></td>
+<td><code>LODE_CRX_URL</code></td>
+</tr>
+<tr class="odd">
+<td>Lode password</td>
+<td><code>--lode-password</code></td>
+<td><code>LODE_PASSWORD</code></td>
+</tr>
+<tr class="even">
+<td>Lode Extension ID</td>
+<td><code>--lode-extid</code></td>
+<td><code>LODE_EXTID</code></td>
+</tr>
+<tr class="odd">
+<td>Nami CRX URL</td>
+<td><code>--nami-crx-url</code></td>
+<td><code>NAMI_CRX_URL</code></td>
+</tr>
+<tr class="even">
+<td>Nami CRX file</td>
+<td><code>--nami-crx</code></td>
+<td><code>NAMI_CRX</code></td>
+</tr>
+<tr class="odd">
+<td>Nami password</td>
+<td><code>--nami-password</code></td>
+<td><code>NAMI_PASSWORD</code></td>
+</tr>
+<tr class="even">
+<td>Nami Extension ID</td>
+<td><code>--nami-extid</code></td>
+<td><code>NAMI_EXTID</code></td>
+</tr>
+<tr class="odd">
+<td>Flint CRX URL</td>
+<td><code>--flint-crx-url</code></td>
+<td><code>FLINT_CRX_URL</code></td>
+</tr>
+<tr class="even">
+<td>Flint CRX file</td>
+<td><code>--flint-crx</code></td>
+<td><code>FLINT_CRX</code></td>
+</tr>
+<tr class="odd">
+<td>Flint password</td>
+<td><code>--flint-password</code></td>
+<td><code>FLINT_PASSWORD</code></td>
+</tr>
+<tr class="even">
+<td>Flint Extension ID</td>
+<td><code>--flint-extid</code></td>
+<td><code>FLINT_EXTID</code></td>
+</tr>
+<tr class="odd">
+<td>Gero CRX URL</td>
+<td><code>--gero-crx-url</code></td>
+<td><code>GERO_CRX_URL</code></td>
+</tr>
+<tr class="even">
+<td>Gero CRX file</td>
+<td><code>--gero-crx</code></td>
+<td><code>GERO_CRX</code></td>
+</tr>
+<tr class="odd">
+<td>Gero password</td>
+<td><code>--gero-password</code></td>
+<td><code>GERO_PASSWORD</code></td>
+</tr>
+<tr class="even">
+<td>Gero Extension ID</td>
+<td><code>--gero-extid</code></td>
+<td><code>GERO_EXTID</code></td>
+</tr>
+<tr class="odd">
+<td>E2E+Plutip: Plutip port number</td>
+<td><code>--plutip-port</code></td>
+<td><code>PLUTIP_PORT</code></td>
+</tr>
+<tr class="even">
+<td>E2E+Plutip: Ogmios port number</td>
+<td><code>--ogmios-port</code></td>
+<td><code>OGMIOS_PORT</code></td>
+</tr>
+<tr class="odd">
+<td>E2E+Plutip: Kupo port</td>
+<td><code>--kupo-port</code></td>
+<td><code>KUPO_PORT</code></td>
+</tr>
+</tbody>
+</table>
+<p>The default configuration can be found in <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/test/e2e.env"><code>test/e2e.env</code></a>.</p>
+<h2 id="creating-a-custom-test-suite">Creating a custom test suite</h2>
+<p>In order to test your own application while using CTL as a library,
+some extra steps need to be performed.</p>
+<h3 id="how-to-configure-the-wallet">How to configure the wallet</h3>
+<p>Since E2E tests are executed on one of the public testnets, some
+setup is needed to allow spending funds from the testnet.</p>
+<ol type="1">
+<li>Run <code>npm run e2e-browser</code>.</li>
+<li>Install the needed extension</li>
+<li>Click through the wallet setup interface, use the <a
+href="https://docs.cardano.org/cardano-testnet/tools/faucet">testnet
+faucet</a> to fund your address, and set the collateral.</li>
+<li>Now, <strong>without running the browser again</strong>, execute
+<code>npm run e2e-pack-settings</code>.</li>
+</ol>
+<p>As a result, you will get a settings archive with the wallet in a
+particular state.</p>
+<h3 id="re-packing-an-extension-as-a-crx-file">Re-Packing an Extension
+as a CRX File</h3>
+<p>While some wallets, like Eternl, provide a single extension that
+works with <code>preprod</code>, <code>preview</code> and
+<code>mainnet</code>, others (e.g. Lode) are distributed separately for
+each of the testnets.</p>
+<p>If you need to use <code>preprod</code> instead of
+<code>preview</code>, perform the following steps to get the
+<code>.crx</code> file:</p>
+<ol type="1">
+<li>Make sure your browser is using the desired extension version.</li>
+<li>Navigate to chrome://extensions/</li>
+<li>Click the extension.</li>
+<li>Switch on “Developer mode” (upper right corner).</li>
+<li>Click “Pack extension”.</li>
+<li>Paste the extension’s directory (see above) into “Extension root
+directory”. You can leave “Private key file” empty.</li>
+<li>Click “Pack extension”.</li>
+<li>The path of the CRX file is displayed in the browser.</li>
+</ol>
+<h3 id="getting-the-extension-id">Getting the extension ID</h3>
+<p>After packing the extension, the test suite must be provided with its
+ID.</p>
+<ol type="1">
+<li>Open list of extensions in the browser settings</li>
+<li>Enable Developer Mode (top-right corner)</li>
+<li>The IDs will become visible</li>
+</ol>
+<h3 id="using-custom-unauthorized-extensions">Using custom unauthorized
+extensions</h3>
+<p>However, the approach above only works for extensions installed
+directly from Chrome Web Store.</p>
+<p>If an extension is not published on Chrome Web Store (e.g. it’s a
+custom or private build), it may not have a stable ID. Look into
+<code>manifest.json</code> <code>key</code> property to check - if it is
+not present, the ID will change on each reload, which makes automation
+impossible.</p>
+<p>To freeze the ID, first unpack the <code>.crx</code> archive, load
+the extension unpacked (in developer mode), and then pack it back. It
+will give you a new <code>.crx</code> as well as a <code>.pem</code>
+file with the same name. The ID can now be derived from this key using
+this command:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">openssl</span> rsa <span class="at">-in</span> key.pem <span class="at">-pubout</span> <span class="at">-outform</span> DER <span class="kw">|</span> <span class="ex">openssl</span> base64 <span class="at">-A</span></span></code></pre></div>
+<p>Unarchive the CRX, put the encoded public key to <code>key</code>
+property of <code>manifest.json</code> file, and archive the directory
+back. You can then reopen the browser and the ID will remain the
+same.</p>
+<p><a
+href="https://stackoverflow.com/questions/37317779/making-a-unique-extension-id-and-key-for-chrome-extension">More
+on extension IDS</a></p>
+<h3 id="serving-the-contract-to-be-tested">Serving the Contract to be
+tested</h3>
+<p>The test suite accepts URLs, which means that the
+<code>Contract</code> you want to test must be served.</p>
+<p>It’s up to the user how to set up the web server (see
+<code>make run-dev</code> for an example), but in order for the testing
+engine to “see” the contract, the configuration parameters must be
+changed:</p>
+<pre class="purescript"><code>runContract config { hooks = Contract.Test.E2E.e2eFeedbackHooks } do
+  ...</code></pre>
+<p>Hooks are a special feature that allows to run arbitrary code during
+various stages of <code>Contract</code> execution.
+<code>e2eFeedbackHooks</code> notify the engine of wallet actions that
+can be triggered while the <code>Contract</code> is running, for
+example, when an extension pop-up appears. The testing engine can react
+to that by issuing commands to interact with the wallet UI, e.g. to
+enter the password and click “sign”.</p>
+<p>Note that the test closes successfully after the first successful
+<code>Contract</code> execution, so if your scenario involves multiple
+<code>Contract</code>s, remove <code>onSuccess</code> hooks from every
+<code>Contract</code> except the last one, or manually run
+<code>e2eFeedbackHooks.onSuccess</code> (it’s just an
+<code>Effect</code> action).</p>
+<p>CTL offers a function to serve the <code>Contract</code>s to be
+tested with a router, that dispatches contracts and configuration
+parameters based on query part of the URL.</p>
+<p>It also builds a page with a table consisting of links to all
+possible examples with all possible environments, that looks like
+this:</p>
+<figure>
+<img src="./images/e2e.png"
+alt="Headless browser test suite - served examples" />
+<figcaption aria-hidden="true">Headless browser test suite - served
+examples</figcaption>
+</figure>
+<p>See <a
+href="../templates/ctl-scaffohttps://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/test/E2E.purs">this file</a> for a quick example:</p>
+<pre class="purescript"><code>main :: Effect Unit
+main = do
+  -- Adds links to all available tests to the DOM for convenience
+  addLinks configs tests
+  -- Serves the appropriate `Contract` with e2eTestHooks
+  route configs tests
+
+configs :: Map E2EConfigName (ContractParams /\ Maybe WalletMock)
+configs = Map.fromFoldable
+  [ &quot;nami&quot; /\ testnetNamiConfig /\ Nothing
+  , &quot;gero&quot; /\ testnetGeroConfig /\ Nothing
+  , &quot;flint&quot; /\ testnetFlintConfig /\ Nothing
+  , &quot;eternl&quot; /\ testnetEternlConfig /\ Nothing
+  , &quot;lode&quot; /\ testnetLodeConfig /\ Nothing
+  , &quot;nami-mock&quot; /\ testnetNamiConfig /\ Just MockNami
+  , &quot;gero-mock&quot; /\ testnetGeroConfig /\ Just MockGero
+  , &quot;flint-mock&quot; /\ testnetFlintConfig /\ Just MockFlint
+  , &quot;lode-mock&quot; /\ testnetLodeConfig /\ Just MockLode
+  ]
+
+tests :: Map E2ETestName (Contract Unit)
+tests = Map.fromFoldable
+  [ &quot;Contract&quot; /\ Scaffold.contract
+  -- Add more `Contract`s here
+  ]</code></pre>
+<p>Now, the <code>Scaffold.contract</code> can be used as a test:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="va">E2E_TESTS</span><span class="op">=</span><span class="st">&quot;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="st">nami:http://localhost:4008/?nami:Contract</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span></span></code></pre></div>
+<p>The <code>nami:</code> prefix specifies which browser extension to
+load for the test, and the query parameter is for the router to be able
+to find the appropriate config.</p>
+<p>Refer to the docs for <code>Contract.Test.E2E.route</code> function
+for an overview of the URL structure.</p>
+<h3 id="mocking-cip-30-interface">Mocking CIP-30 interface</h3>
+<p>It is possible to test the contracts without having a single wallet
+extension installed, just by providing a private payment key, and
+(optionally) a private stake key, that correspond to a testnet address
+with some tAda. CTL test suite can mock (partially) the functionality of
+a CIP-30 wallet given just the keys.</p>
+<p>Note that different wallets implement different <em>application
+logic</em> despite using a uniform interface, for example, Eternl uses
+multiple addresses, while all the other wallets are single-address. For
+now, CIP-30 mock implements single-address logic only. There is no
+guarantee that the logic that is implemented by the mock is the same as
+one of a real wallet: subtle differences or bugs can affect the
+execution path of your application.</p>
+<p>To provide the keys, they first need to be generated.</p>
+<p>Follow this guide to generate key pairs:</p>
+<p>https://developers.cardano.org/docs/stake-pool-course/handbook/keys-addresses/</p>
+<p>As a result, you will get json files that look like this:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;PaymentSigningKeyShelley_ed25519&quot;</span><span class="fu">,</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;description&quot;</span><span class="fu">:</span> <span class="st">&quot;Payment Signing Key&quot;</span><span class="fu">,</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">&quot;cborHex&quot;</span><span class="fu">:</span> <span class="st">&quot;58200b07c066ba037344acee5431e6df41f6034bf1c5ffd6f803751e356807c6a209&quot;</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p>Simply copy the <code>cborHex</code> from payment and stake signing
+keys (the order is important), and add them to the URL, separating by
+<code>:</code>:</p>
+<pre><code>http://localhost:4008/?nami-mock:Contract:58200b07c066ba037344acee5431e6df41f6034bf1c5ffd6f803751e356807c6a209:5820f0db841df6c7fbc4506c58fad6676db0354a02dfd26efca445715a8adeabc338</code></pre>
+<p>The <code>nami:</code> prefix should not be specified, otherwise CTL
+will refuse to overwrite the existing wallet with a mock.</p>
+<p>In order to use the keys, their corresponding address must be
+pre-funded using the <a
+href="https://docs.cardano.org/cardano-testnet/tools/faucet">faucet</a>
+(beware of IP-based rate-limiting) or from another wallet. Most
+contracts require at least two UTxOs to run (one will be used as
+collateral), so it’s best to make two transactions.</p>
+<h3 id="using-cip-30-mock-with-plutip">Using CIP-30 mock with
+Plutip</h3>
+<p>It’s possible to run headless browser tests on top of a temporary
+plutip cluster. In this case, key generation and pre-funding will be
+handled by <code>plutip-server</code>, as well as deployment of all the
+query layer services.</p>
+<p>To do that, it’s enough to define a config name that:</p>
+<ul>
+<li>uses a <code>ContractParams</code> value with <code>networkId</code>
+set to <code>MainnetId</code>.</li>
+<li>Specifies a wallet mock (e.g. <code>MockNami</code>)</li>
+</ul>
+<p>E.g.:</p>
+<pre class="purescript"><code>wallets :: Map E2EConfigName (ContractParams /\ Maybe WalletMock)
+wallets = Map.fromFoldable
+  [ &quot;plutip-nami-mock&quot; /\ mainnetNamiConfig /\ Just MockNami
+  , &quot;plutip-gero-mock&quot; /\ mainnetGeroConfig /\ Just MockGero
+  , &quot;plutip-flint-mock&quot; /\ mainnetFlintConfig /\ Just MockFlint
+  , &quot;plutip-lode-mock&quot; /\ mainnetLodeConfig /\ Just MockLode
+  ]</code></pre>
+<p>Then a test entry <em>without</em> specifying any private key can be
+used:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">E2E_TESTS</span><span class="op">=</span><span class="st">&quot;</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="st">plutip:http://localhost:4008/?plutip-nami-mock:SomeContract</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;</span></span></code></pre></div>
+<p>Full example can be found <a
+href="../templates/ctl-scaffohttps://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/test/E2E.purs">in the template</a>.</p>
+<p>There are a few important caveats/limitations:</p>
+<ul>
+<li>We only allow base addresses (with a stake pubkey hash present) to
+be used. If there’s a need to use enterprise addresses, the users should
+move some ada to their own enterprise address, e.g. with
+<code>mustPayToPubKey</code></li>
+<li>The amount of tAda is fixed to <code>1000000000000</code> and
+divided into 5 UTxOs equally</li>
+</ul>
+</body>
+</html>

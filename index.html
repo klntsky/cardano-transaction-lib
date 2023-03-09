@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>cardano-transaction-lib</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">cardano-transaction-lib</h1> -->
+</header>
+<h1 id="cardano-transaction-lib">cardano-transaction-lib</h1>
+<p><a
+href="https://hercules-ci.com/github/Plutonomicon/cardano-transaction-lib"><img
+src="https://img.shields.io/badge/ci--by--hercules-green.svg"
+alt="Hercules-ci" /></a> <a
+href="https://public-plutonomicon.cachix.org"><img
+src="https://img.shields.io/badge/cachix-public_plutonomicon-blue.svg"
+alt="Cachix Cache" /></a> <a
+href="https://plutonomicon.github.io/cardano-transaction-lib/"><img
+src="https://img.shields.io/badge/docs-PureScript%20code%20documentation-%2377F"
+alt="PureScript code documentation" /></a></p>
+<p><strong>cardano-transaction-lib</strong> (CTL) is a Purescript
+library for building smart contract transactions on Cardano. It aims to
+port the functionality and interface of Plutus off-chain code to the
+browser environment and NodeJS.</p>
+<p><strong>Table of Contents</strong></p>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<ul>
+<li><a href="#documentation">Documentation</a>
+<ul>
+<li><a href="#light-wallet-support">Light wallet support</a></li>
+</ul></li>
+<li><a href="#roadmap">Roadmap</a></li>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#additional-resourcestools">Additional
+resources/tools:</a></li>
+<li><a href="#available-support-channels-info">Available support
+channels info</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="documentation">Documentation</h2>
+<p>Please explore our documentation to discover how to use CTL, how to
+set up its runtime, and how it compares to Plutus/PAB:</p>
+<ul>
+<li><a href="getting-started.html">Super quick start</a></li>
+<li><a href="ctl-as-dependency.html">Adding CTL as a dependency</a></li>
+<li><a href="runtime.html">CTL’s runtime dependencies</a></li>
+<li><a href="blockfrost.html">Blockfrost support</a></li>
+<li><a href="getting-started.html">Getting started writing CTL
+contracts</a></li>
+<li><a href="importing-scripts.html">Importing Plutus Scripts</a></li>
+<li><a href="plutus-comparison.html">Migrating from Plutus to
+CTL</a></li>
+<li><a href="testing.html">Testing overview</a>
+<ul>
+<li><a href="plutip-testing.html">Testing contracts with Plutip</a></li>
+<li><a href="e2e-testing.html">End-to-end testing with headless
+browsers</a></li>
+<li><a href="test-utils.html">Utilities for testing</a></li>
+</ul></li>
+<li><a href="query-layers.html">Backend and wallet state
+synchronization</a></li>
+<li><a href="cip-25-nfts.html">CIP-25 NFT standard support</a></li>
+<li><a href="balancing.html">Transaction balancing</a></li>
+<li><a href="tx-chaining.html">Transaction chaining</a></li>
+<li><a href="staking.html">Ada staking support</a></li>
+<li><a href="secp256k1-support.html">SECP256k1 support (CIP-49)</a></li>
+<li><a href="babbage-features.html">Babbage features support</a></li>
+<li><a href="faq.html">FAQs</a></li>
+<li><a href="video-intro.html">Feature overview video</a></li>
+<li><a href="development.html">Development workflows for CTL
+itself</a></li>
+</ul>
+<p>You can also access <a
+href="https://plutonomicon.github.io/cardano-transaction-lib/">PureScript
+documentation for CTL and its dependencies</a> for the most recent
+<code>develop</code> version, or <a
+href="development.html#generating-ps-documentation">generate it
+yourself</a>.</p>
+<h3 id="light-wallet-support">Light wallet support</h3>
+<p>Support is planned for the following light wallets:</p>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+<a href="https://namiwallet.io/">Nami</a></li>
+<li><input type="checkbox" disabled="" checked="" />
+<a href="https://gerowallet.io/">Gero</a></li>
+<li><input type="checkbox" disabled="" checked="" />
+<a href="https://flint-wallet.com/">Flint</a></li>
+<li><input type="checkbox" disabled="" checked="" />
+<a href="https://lodewallet.io/">Lode</a></li>
+<li><input type="checkbox" disabled="" checked="" />
+<a href="https://eternl.io/">Eternl (formerly CCvault)</a></li>
+<li><input type="checkbox" disabled="" checked="" />
+<a href="https://nu.fi/">NuFi</a></li>
+<li><input type="checkbox" disabled="" />
+<a href="https://www.lace.io/">Lace</a></li>
+<li><input type="checkbox" disabled="" />
+<a href="https://typhonwallet.io/">Typhon</a></li>
+<li><input type="checkbox" disabled="" />
+<a href="https://yoroi-wallet.com/">Yoroi</a></li>
+</ul>
+<h2 id="roadmap">Roadmap</h2>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+<strong>Stage 1</strong> Build a simple transaction in the browser that
+works with at least one light wallet (Nami)</li>
+<li><input type="checkbox" disabled="" checked="" />
+<strong>Stage 2</strong> Once we can construct a simple user-to-user
+transaction, we will try to use the library to submit the tx with
+nami</li>
+<li><input type="checkbox" disabled="" checked="" />
+<strong>Stage 3</strong> Once we have a simple working transaction, we
+will seek to build a Plutus smart contract transaction with datum from
+scratch</li>
+<li><input type="checkbox" disabled="" checked="" />
+<strong>Stage 4</strong> Once we can construct Plutus smart contract
+transactions, we will seek to build a library/DSL/interface such that
+transactions can be built using constraints and lookups - as close as
+possible to a cut-and-paste solution from Plutus’ <code>Contract</code>
+monad code in Haskell (but with no guarantee that code changes are not
+necessary)<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+<strong>Stage 4.1</strong> Investigate supporting compatibility with the
+Vasil hardfork and improvements to our initial <code>Contract</code>
+API</li>
+</ul></li>
+<li><input type="checkbox" disabled="" />
+<strong>Stage 5</strong> Once we have a basic
+<code>Contract</code>-style API, we will further refine its public
+interface, expand wallet support (see <a
+href="#light-wallet-support">below</a>), expose a test interface
+(<strong>DONE</strong> - see <a
+href="doc/plutip-testing.html">here</a>), provide a more ergonomic JS/TS
+API, support stake validators (<strong>DONE</strong>), and support CIP
+workflows on the public testnet (<strong>In progress</strong>)</li>
+<li><input type="checkbox" disabled="" />
+<strong>Stage 6</strong> Once CTL’s <code>Contract</code> interface has
+been stabilized, we will add support for even more wallets and attempt
+to deprecate CTL’s currently required Haskell server
+(<strong>DONE</strong>)</li>
+</ul>
+<h2 id="architecture">Architecture</h2>
+<p>CTL is directly inspired by the Plutus Application Backend (PAB).
+Unlike PAB, however, CTL is a library and not a standalone process. Over
+the course of CTL’s development, several questions have been raised as
+to how best create PAB-as-a-library:</p>
+<ol type="1">
+<li>How do we get the transaction in the right format?
+<ul>
+<li>This is handled by <code>cardano-serialization-lib</code>, a Rust
+library available as WASM</li>
+</ul></li>
+<li>How do we query the chain?
+<ul>
+<li>This has been solved using Ogmios &amp; Kupo</li>
+<li>We <a href="https://cardano.ideascale.com/c/idea/420791">will
+support</a> an alternative <a
+href="https://blockfrost.io/">BlockFrost</a> backend as well in the
+future</li>
+</ul></li>
+<li>How do we query for datums (i.e. the datums themselves and not just
+their hashes)?
+<ul>
+<li><code>Kupo</code> solves this problem</li>
+</ul></li>
+<li>How do we get wallet data?
+<ul>
+<li>This is done via browser-based light wallet integration in the
+browser based on CIP-30</li>
+</ul></li>
+<li>How closely should we follow Plutus’ <code>Contract</code> API?
+<ul>
+<li>CTL’s <code>Contract</code> model is <strong>significantly</strong>
+less restrictive than Plutus’ and allows for arbitrary effects within
+the <code>Contract</code> monad</li>
+<li>Certain features cannot be directly translated into Purescript from
+Haskell due to differences between the two languages</li>
+<li>Some of the Plutus conventions do not make sense for us, due to
+differences between on-chain and off-chain</li>
+</ul></li>
+</ol>
+<h2 id="additional-resourcestools">Additional resources/tools:</h2>
+<ul>
+<li><a
+href="https://github.com/Emurgo/cardano-serialization-lib/"><code>cardano-serialization-lib</code></a></li>
+<li><a href="https://ogmios.dev">Ogmios</a> for chain queries</li>
+<li><a href="https://cardanosolutions.github.io/kupo/">Kupo</a> for
+chain queries</li>
+<li><a
+href="https://github.com/cardano-foundation/CIPs/tree/master/CIP-0030">CIP-30</a>
+(wallet interface - Nami partially implements this)</li>
+<li><a href="https://github.com/Berry-Pool/nami-wallet">Nami
+docs</a></li>
+<li><a
+href="https://github.com/input-output-hk/cardano-ledger/blob/0738804155245062f05e2f355fadd1d16f04cd56/alonzo/impl/cddl-files/alonzo.cddl">Alonzo
+CDDL spec</a></li>
+</ul>
+<h2 id="available-support-channels-info">Available support channels
+info</h2>
+<p>You can find help, more information and ongoing discusion about the
+project here:</p>
+<ul>
+<li><a href="https://discord.gg/JhbexnV9Pc">Plutonomicon
+Discord</a></li>
+<li>#ctl channel at MLabs’ Slack</li>
+</ul>
+</body>
+</html>

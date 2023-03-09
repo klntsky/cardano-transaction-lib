@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Staking constraints in CTL</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">Staking constraints in CTL</h1> -->
+</header>
+<!-- DOCTOC SKIP -->
+<h1 id="staking-constraints-in-ctl">Staking constraints in CTL</h1>
+<p><a href="https://cardano.org/stake-pool-delegation/">Staking</a> is
+the process of delegation of Ada claimed by a stake key or a script to a
+staking pool. Staking is an important part of Cardano operation, because
+it incentivizes block validators to actually perform their work.</p>
+<p><a
+href="https://github.com/Plutonomicon/plutonomicon/blob/main/stake-scripts.html">The
+explainer from Plutonomicon</a> shows how staking works from a more
+technical perspective.</p>
+<p>CTL supports all operations with stake:</p>
+<ul>
+<li>Registration/Deregistration of stake credentials (pubkeys, plutus
+and native scripts)</li>
+<li>Registration/Retirement of a stake pool</li>
+<li>Delegation of ADA to a stake pool</li>
+<li>Receiving rewards</li>
+<li>Withdrawing rewards</li>
+</ul>
+<p><a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/test/Plutip/Staking.purs">Our tests</a> include examples for each of
+the supported cases.</p>
+</body>
+</html>

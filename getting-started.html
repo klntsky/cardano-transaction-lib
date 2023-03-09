@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Getting Started with CTL</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+      }
+    pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { font-weight: bold; } /* Alert */
+    code span.an { font-style: italic; } /* Annotation */
+    code span.cf { font-weight: bold; } /* ControlFlow */
+    code span.co { font-style: italic; } /* Comment */
+    code span.cv { font-style: italic; } /* CommentVar */
+    code span.do { font-style: italic; } /* Documentation */
+    code span.dt { text-decoration: underline; } /* DataType */
+    code span.er { font-weight: bold; } /* Error */
+    code span.in { font-style: italic; } /* Information */
+    code span.kw { font-weight: bold; } /* Keyword */
+    code span.pp { font-weight: bold; } /* Preprocessor */
+    code span.wa { font-style: italic; } /* Warning */
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">Getting Started with CTL</h1> -->
+</header>
+<h1 id="getting-started-with-ctl">Getting Started with CTL</h1>
+<p>This guide will help you get started writing contracts with CTL.</p>
+<p><strong>Table of Contents</strong>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --></p>
+<ul>
+<li><a href="#prerequisites">Prerequisites</a>
+<ul>
+<li><a href="#setting-up-nix-caches">Setting up Nix caches</a></li>
+<li><a href="#setting-up-a-new-project">Setting up a new
+project</a></li>
+<li><a href="#other-prerequisites">Other prerequisites</a></li>
+</ul></li>
+<li><a href="#importing-ctl-modules">Importing CTL modules</a>
+<ul>
+<li><a href="#the-contract-interface">The <code>Contract</code>
+interface</a></li>
+<li><a href="#our-prelude">Our <code>Prelude</code></a></li>
+</ul></li>
+<li><a href="#executing-contracts-and-the-contractenv">Executing
+contracts and the <code>ContractEnv</code></a>
+<ul>
+<li><a href="#making-the-contractenv">Making the
+<code>ContractEnv</code></a></li>
+</ul></li>
+<li><a href="#building-and-submitting-transactions">Building and
+submitting transactions</a>
+<ul>
+<li><a href="#using-compiled-scripts">Using compiled scripts</a></li>
+</ul></li>
+<li><a href="#testing">Testing</a>
+<ul>
+<li><a href="#without-a-light-wallet">Without a light wallet</a></li>
+<li><a href="#with-a-light-wallet">With a light wallet</a></li>
+<li><a href="#plutip-integration">Plutip integration</a></li>
+</ul></li>
+<li><a href="#see-also">See also</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="prerequisites">Prerequisites</h2>
+<h3 id="setting-up-nix-caches">Setting up Nix caches</h3>
+<p>Nix caches improve build speeds by allowing to download pre-built
+dependencies instead of compiling them from source.</p>
+<p>Follow <a
+href="https://github.com/input-output-hk/cardano-ledger#nix-cache">these
+instructions</a> to add the IOG caches.</p>
+<p>Then, add <code>https://public-plutonomicon.cachix.org</code> and
+<code>public-plutonomicon.cachix.org-1:3AKJMhCLn32gri1drGuaZmFrmnue+KkKrhhubQk/CWc=</code>
+to <code>substituters</code> and <code>trusted-public-keys</code>,
+respectively, or run <code>cachix use public-plutonomicon</code> if you
+use <a href="https://cachix.org">Cachix</a>.</p>
+<h3 id="setting-up-a-new-project">Setting up a new project</h3>
+<p>The easiest way to create a new CTL project is to use our
+<code>ctl-scaffold</code> flake template. This lives in the CTL repo –
+you can have a look <a href="../templates/ctl-scaffold">here</a>. It
+contains a simple, yet complete, flakes-based scaffolding project with
+example <code>outputs</code> for a CTL project, including its
+runtime.</p>
+<p>A new project can be initialized as follows:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> mkdir new-project <span class="kw">&amp;&amp;</span> <span class="bu">cd</span> new-project</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> nix flake init <span class="at">-t</span> github:Plutonomicon/cardano-transaction-lib</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> git init</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> git add <span class="pp">*</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="ex">$</span> git commit <span class="at">-m</span> <span class="st">&#39;Initial commit&#39;</span></span></code></pre></div>
+<p><strong>Note</strong>: Nix flakes are just source trees with a
+<code>flake.nix</code> file in them, so initializing a <code>git</code>
+repo as illustrated above is necessary to have a working project. Source
+files not tracked by a VCS are invisible to Nix when using flakes, so do
+not skip that (or a similar) step!</p>
+<p>You can learn more about using CTL as a dependency <a
+href="./ctl-as-dependency.html">here</a>.</p>
+<h3 id="other-prerequisites">Other prerequisites</h3>
+<p>You will also need to become familiar with <a
+href="./runtime.html">CTL’s runtime</a> as its runtime services are
+required for executing virtually all contracts.</p>
+<h2 id="importing-ctl-modules">Importing CTL modules</h2>
+<h3 id="the-contract-interface">The <code>Contract</code> interface</h3>
+<p>CTL’s public interface is contained in the <code>Contract.*</code>
+namespace. We recommend to always prefer imports from the
+<code>Contract</code> namespace. That is, <strong>avoid importing any
+CTL modules in <code>Ctl.Internal.*</code></strong>. Importing internal
+modules will make your code more brittle and susceptible to breakages
+when upgrading CTL versions.</p>
+<p>For example, avoid the following:</p>
+<pre class="purescript"><code>
+-- Anything not in in the `Contract` namespace should be considered an
+-- **internal** CTL module
+
+import Ctl.Internal.Types.TokenName (TokenName)
+import Ctl.Internal.Types.Scripts (MintingPolicy)
+</code></pre>
+<p>Instead, prefer:</p>
+<pre class="purescript"><code>
+import Contract.Value (TokenName)
+import Contract.Scripts (MintingPolicy)
+</code></pre>
+<h3 id="our-prelude">Our <code>Prelude</code></h3>
+<p>Unlike Haskell, Purescript’s <code>Prelude</code> is not imported
+implicitly in every module and is much smaller in scope (for example,
+common non-primitive types like <code>Maybe</code> are contained in
+their own packages, rather than in the <code>Prelude</code>). Rather
+than require users to import Purescript’s <code>Prelude</code> and other
+common modules directly, we offer a <code>Contract.Prelude</code> that
+re-exports Purescript’s <code>Prelude</code>, several common modules
+(e.g. <code>Data.Maybe</code>, <code>Data.Either</code>, etc…), and
+CTL-specific functionality. <strong>We recommend using
+<code>Contract.Prelude</code> as a replacement for <code>Prelude</code>
+in projects using CTL</strong>, particularly for developers who are less
+familiar with Purescript and its divergences from Haskell.</p>
+<h2 id="executing-contracts-and-the-contractenv">Executing contracts and
+the <code>ContractEnv</code></h2>
+<p>Unlike <a
+href="plutus-comparison.html#the-contract-type">Plutus/PAB</a>, CTL is
+structued internally around a familiar <code>mtl</code>-style monad
+transformer stack. As such, contracts written in CTL are called from
+other Purescript code (i.e. CTL has no concept of “endpoints” or
+“activation”). The top-level of your program written in CTL will look
+like the following:</p>
+<pre class="purescript"><code>main :: Effect Unit
+main = ...</code></pre>
+<p>(<code>Effect</code> is Purescript’s synchronous effect monad.)</p>
+<p>Internally, CTL uses Purescript’s <code>Aff</code> monad, which
+represents asynchronous effects. Thus, you must first call the
+eliminator for <code>Aff</code> to run your <code>Contract</code>
+code:</p>
+<pre class="purescript"><code>main :: Effect Unit
+main = Contract.Monad.launchAff_ do -- we re-export this for you
+ ...</code></pre>
+<p>Then use the eliminator <code>Contract.Monad.runContract</code> with
+a config specifying network and wallet:</p>
+<pre class="purescript"><code>main :: Effect Unit
+main = Contract.Monad.launchAff_ do
+  runContract Contract.Config.testnetNamiConfig do
+    ...</code></pre>
+<h3 id="making-the-contractenv">Making the <code>ContractEnv</code></h3>
+<p>The <code>ContractEnv</code> type contains configuration values and
+websocket connections that are required to execute contracts written in
+CTL. The users should not construct it directly -
+<code>Contract.Config.ContractParams</code> should be used instead.</p>
+<p>For local development and testing, we provide
+<code>Contract.Config.testnetConfig</code> where all
+<code>CtlBackend</code> service hosts are set to <code>localhost</code>
+and the <code>logLevel</code> is set to <code>Trace</code>.</p>
+<p>It is <strong>not recommended to directly construct or manipulate a
+<code>ContractEnv</code> yourself</strong> as the process of making a
+new config initializes websockets. Instead, use
+<code>Contract.Monad.ContractParams</code> with
+<code>runContract</code>.</p>
+<p>A special <code>Contract.Config.WalletSpec</code> type is used to
+specify which wallet to use during the <code>Contract</code>
+lifetime.</p>
+<p>An example of building a <code>Contract</code> via
+<code>ContractParams</code> is as follows:</p>
+<pre class="purescript"><code>main :: Effect Unit
+main = Contract.Monad.launchAff_ do -- we re-export this for you
+  let
+    config :: ContractParams
+    config =
+      { backendParams: mkCtlBackendParams
+        { ogmiosConfig: defaultOgmiosWsConfig
+        , kupoConfig: defaultKupoServerConfig
+        }
+      , networkId: TestnetId
+      , logLevel: Trace
+      , walletSpec: Just ConnectToNami
+      , customLogger: Nothing
+      }
+  runContract config someContract
+
+someContract :: Contract Unit
+someContract = do
+  ...</code></pre>
+<p>When using custom environments (e.g. in production), services can be
+configured to point to the same port with different paths (a webserver
+is needed to set that up):</p>
+<pre class="purescript"><code>customOgmiosWsConfig :: ServerConfig
+customOgmiosWsConfig =
+  { port: UInt.fromInt 80
+  , host: &quot;localhost&quot;
+  , secure: false
+  , path: Just &quot;/api/ogmios&quot;
+  }</code></pre>
+<h2 id="building-and-submitting-transactions">Building and submitting
+transactions</h2>
+<p>Unlike PAB, CTL obscures less of the build-balance-sign-submit
+pipeline for transactions and most of the steps are called individually.
+The general workflow in CTL is similar to the following:</p>
+<ul>
+<li><p>Build a transaction using <code>Contract.ScriptLookups</code>,
+<code>Contract.TxConstraints</code> and
+<code>Contract.BalanceTxConstraints</code> (it is also possible to
+directly build a <code>Transaction</code> if you require even greater
+low-level control over the process, although we recommend the
+constraints/lookups approach for most users):</p>
+<pre class="purescript"><code>contract = do
+  let
+    constraints :: TxConstraints Unit Unit
+    constraints =
+      TxConstraints.mustPayToScript vhash unitDatum
+        (Value.lovelaceValueOf $ BigInt.fromInt 2_000_000)
+
+    lookups :: ScriptLookups PlutusData
+    lookups = ScriptLookups.validator validator
+
+    balanceTxConstraints :: BalanceTxConstraints.BalanceTxConstraintsBuilder
+    balanceTxConstraints =
+      BalanceTxConstraints.mustUseUtxosAtAddress address
+        &lt;&gt; BalanceTxConstraints.mustSendChangeToAddress address
+        &lt;&gt; BalanceTxConstraints.mustNotSpendUtxoWithOutRef nonSpendableOref
+
+  -- `liftedE` will throw a runtime exception on `Left`s
+  unbalancedTx &lt;- liftedE $ Lookups.mkUnbalancedTx lookups constraints
+  ...</code></pre></li>
+<li><p>Balance it using <code>Contract.Transaction.balanceTx</code> (or
+<code>Contract.Transaction.balanceTxWithConstraints</code> if you need
+to adjust the balancer behaviour) and then sign it using
+<code>signTransaction</code>:</p>
+<pre class="purescript"><code>contract = do
+  ...
+  -- `liftedE` will throw a runtime exception on `Left`s
+  balancedTx &lt;-
+    liftedE $ balanceTxWithConstraints unbalancedTx balanceTxConstraints
+  balancedSignedTx &lt;- signTransaction balancedTx
+  ...</code></pre></li>
+<li><p>Submit using <code>Contract.Transaction.submit</code>:</p>
+<pre class="purescript"><code>contract = do
+  ...
+  txId &lt;- submit balancedSignedTx
+  logInfo&#39; $ &quot;Tx ID: &quot; &lt;&gt; show txId</code></pre></li>
+</ul>
+<h3 id="using-compiled-scripts">Using compiled scripts</h3>
+<p>You can import your scripts to use with CTL. See <a
+href="./importing-scripts.html">importing-scripts</a>.</p>
+<h2 id="testing">Testing</h2>
+<h3 id="without-a-light-wallet">Without a light wallet</h3>
+<p>We provide <code>KeyWallet</code> to enable testing outside of the
+browser, or in-browser without a light wallet installed. To generate a
+key, you can use <code>cardano-cli</code> as follows:</p>
+<pre class="shell"><code>$ cardano-cli address key-gen --normal-key --signing-key-file payment.skey --verification-key-file payment.vkey</code></pre>
+<p>The signing key can be loaded to CTL using <code>WalletSpec</code>’s
+<code>UseKeys</code> constructor. See <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/examples/KeyWallet/Internal/Pkh2PkhContract.purs#L49"><code>examples/KeyWallet/Internal/Pkh2PkhContract.purs</code></a>.</p>
+<p>From here you can submit transactions that will be signed with your
+private key, or perhaps export transactions to be tested with external
+tools such as <a
+href="https://github.com/mlabs-haskell/plutip"><code>plutip</code>
+testing tool</a>.</p>
+<h3 id="with-a-light-wallet">With a light wallet</h3>
+<p>For full testing with browser-based light wallets see <a
+href="./e2e-testing.html">E2E Testing in the Browser</a>.</p>
+<h3 id="plutip-integration">Plutip integration</h3>
+<p>Plutip is a tool for testing contracts on a local testnet. See <a
+href="./plutip-testing.html">CTL integration with Plutip</a>.</p>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="./plutus-comparison.html">comparing CTL with
+Plutus/PAB</a></li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Adding CTL as a Dependency</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+      }
+    pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { font-weight: bold; } /* Alert */
+    code span.an { font-style: italic; } /* Annotation */
+    code span.cf { font-weight: bold; } /* ControlFlow */
+    code span.co { font-style: italic; } /* Comment */
+    code span.cv { font-style: italic; } /* CommentVar */
+    code span.do { font-style: italic; } /* Documentation */
+    code span.dt { text-decoration: underline; } /* DataType */
+    code span.er { font-weight: bold; } /* Error */
+    code span.in { font-style: italic; } /* Information */
+    code span.kw { font-weight: bold; } /* Keyword */
+    code span.pp { font-weight: bold; } /* Preprocessor */
+    code span.wa { font-style: italic; } /* Warning */
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">Adding CTL as a Dependency</h1> -->
+</header>
+<h1 id="adding-ctl-as-a-dependency">Adding CTL as a Dependency</h1>
+<p>CTL can be imported as an additional dependency into a Purescript
+project built with Spago (i.e. by listing the project in your
+<code>packages.dhall</code>). Running CTL contracts requires several <a
+href="./runtime.html">runtime dependencies</a> as well.</p>
+<p><strong>Table of Contents</strong>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --></p>
+<ul>
+<li><a href="#caveats">Caveats</a></li>
+<li><a href="#using-ctls-overlays">Using CTL’s overlays</a></li>
+<li><a href="#upgrading-ctl">Upgrading CTL</a></li>
+<li><a href="#using-ctl-from-js">Using CTL from JS</a>
+<ul>
+<li><a href="#bundling">Bundling</a></li>
+<li><a href="#wrapping-ctl-into-a-js-interface">Wrapping CTL into a JS
+interface</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="caveats">Caveats</h2>
+<p>The following caveats alway applies when using CTL from your
+project:</p>
+<ol type="1">
+<li>Only bundling with Webpack is supported (this is due to our internal
+dependency on <code>cardano-serialization-lib</code> which uses WASM
+with top-level <code>await</code>; only Webpack is reliably capable of
+bundling this properly)</li>
+<li>The environment variable <code>BROWSER_RUNTIME</code> determines
+which version of <code>cardano-serialization-lib</code> is loaded by
+CTL, so you must use it as well (i.e. set it to <code>1</code> for the
+browser; leave it unset for NodeJS)</li>
+</ol>
+<h2 id="using-ctls-overlays">Using CTL’s overlays</h2>
+<p>CTL exposes two <code>overlay</code>s from its flake. You can use
+these in the Nix setup of your own project to use the same setup as we
+do, e.g. the same packages and PS builders:</p>
+<ul>
+<li><code>overlays.purescript</code> contains Purescript builders to
+compile Purescript sources, build bundles with Webpack
+(<code>bundlePursProject</code>), run unit tests using NodeJS
+(<code>runPursTest</code>), run CTL contracts on a private testnet using
+Plutip (<code>runPlutipTest</code>), or build Pursuit documentation
+(<code>buildSearchablePursDocs</code> and
+<code>launchSearchablePursDocs</code>)</li>
+<li><code>overlays.runtime</code> contains various packages and other
+tools used in CTL’s runtime, including <code>ogmios</code>,
+<code>kupo</code>, and <code>plutip-server</code>. It also defines
+<code>buildCtlRuntime</code> and <code>launchCtlRuntime</code> to help
+you quickly launch all runtime services (see the <a
+href="./runtime.html">runtime docs</a>)</li>
+</ul>
+<p>We’ve split the overlays into two components to allow users to more
+easily choose which parts of CTL’s Nix infrastructure they would like to
+directly consume. For example, some users do not require a pre-packaged
+runtime and would prefer to build it themselves with more control over
+its components (e.g. by directly using <code>ogmios</code> from their
+own <code>inputs</code>). Such users might still like to use our
+<code>purescript</code> overlay – splitting the <code>overlays</code>
+allows us to support this. <code>overlays.runtime</code> also contains
+several haskell.nix packages which may cause issues with
+<code>hackage.nix</code> versions in your own project.</p>
+<p>Do note that <code>runPlutipTest</code> in
+<code>overlays.purescript</code> requires the presence of all of our
+runtime components. If you choose not to consume
+<code>overlays.runtime</code>, please ensure that your package set
+contains these (e.g. by adding them to your own <code>overlays</code>
+when instantiating <code>nixpkgs</code>). You can find a complete list
+of the required runtime services <a
+href="./plutip-testing.html#architecture">here</a>.</p>
+<p>To see an example project that uses both <code>overlays</code>,
+please refer to our <a
+href="../templates/ctl-scaffold/flake.nix">scaffolding template</a>. You
+can also use this template to conveniently initialize a new CTL-based
+project
+(<code>nix flake init -t github:Plutonomicon/cardano-transaction-lib</code>
+in a new directory). It will take a significant amount of time for spago
+to download the dependencies.</p>
+<h2 id="upgrading-ctl">Upgrading CTL</h2>
+<p>Unfortunately, the process of upgrading CTL is fairly involved. This
+is in part due to the complexity of the project and in part due to
+features inherent to Spago’s approach to dependency management. The
+following assumes that you are using a project based on Nix flakes and
+using our overlays as outlined above.</p>
+<p>Make sure to perform <strong>all</strong> of the following steps,
+otherwise you <strong>will</strong> encounter difficult-to-debug
+issues:</p>
+<ol type="1">
+<li><strong>Update your flake input</strong></li>
+</ol>
+<ul>
+<li>Update the <code>rev</code> you’re using for CTL in your flake
+<code>inputs</code>
+<ul>
+<li><strong>Note</strong>: Nix might throw an error about CTL following
+a “non-existent input” after doing this. The best way to solve this is
+to upgrade the version of Nix that you’re using. Otherwise,
+<code>nix flake lock --update-input &lt;NAME&gt;</code>, where
+<code>NAME</code> corresponds to CTL in your flake’s
+<code>inputs</code>, should solve this</li>
+</ul></li>
+</ul>
+<ol start="2" type="1">
+<li><strong>Update your Purescript dependencies</strong></li>
+</ol>
+<ul>
+<li><p>Update the CTL <code>version</code> in your
+<code>packages.dhall</code>. Make sure that this is the exact same
+revision as in your flake inputs</p></li>
+<li><p>Possibly update the <code>dependencies</code> section for CTL in
+your <code>packages.dhall</code></p>
+<ul>
+<li><p>You can find a list of CTL’s dependencies in our own
+<code>spago.dhall</code> (but make sure to check at the correct
+revision)</p></li>
+<li><p>You might also need to add new transitive git dependencies if CTL
+has added any to its own direct dependencies (i.e. you need to copy the
+matching stanzas from CTL’s <code>packages.dhall</code> to your own;
+these are contained in the <code>additions</code> record in CTL’s
+<code>packages.dhall</code>)</p>
+<ul>
+<li><p>For example, if the following package <code>foo</code> is added
+to CTL’s <code>additions</code> (in <code>packages.dhall</code>) between
+your old revision and the one you’re upgrading to:</p>
+<pre class="dhall"><code>
+let additions =
+      { foo =
+        { dependencies =
+          [ &quot;bar&quot;
+          , &quot;baz&quot;
+          ]
+        }
+      , repo = &quot;https://github.com/quux/foo.git&quot;
+      , version = &quot;0000000000000000000000000000000000000000&quot;
+      -- ...
+      }</code></pre>
+<p>You also need to add the same package, identically, to your own
+<code>packages.dhall</code>, otherwise the compiler will not be able to
+find it</p></li>
+</ul></li>
+</ul></li>
+<li><p>Run <code>spago2nix generate</code> and make sure to stage and
+commit the resulting <code>spago-packages.nix</code> if it has
+changed</p></li>
+</ul>
+<ol start="3" type="1">
+<li><strong>Update your JS dependencies</strong></li>
+</ol>
+<ul>
+<li>If CTL has added any JS dependencies, these will also need to be
+added to your own <code>package.json</code></li>
+<li>Similarly, if any of CTL’s JS dependencies have changed versions,
+you will need to use the <strong>exact</strong> same version in your own
+<code>package.json</code></li>
+<li>That is, avoid using the <code>~</code> or <code>^</code> prefixes
+(e.g use versions like <code>"1.6.51"</code> instead of
+<code>"^1.6.51"</code>)</li>
+<li>If you’re using a <code>package-lock.json</code> (which is
+<em>highly</em> recommended), you can update the lockfile with
+<code>npm i --package-lock-only</code></li>
+</ul>
+<ol start="4" type="1">
+<li><strong>Update your webpack config</strong></li>
+</ol>
+<ul>
+<li>Sometimes the WebPack configuration also comes with breaking
+changes. Common source of problems are changes to
+<code>resolve.fallback</code>, <code>plugins</code> and
+<code>experiments</code> fields of the WebPack config. Use
+<code>git diff old-revision new-revision webpack.config.js</code> in the
+root of a cloned CTL repo, or use <code>git blame</code>.</li>
+</ul>
+<h2 id="using-ctl-from-js">Using CTL from JS</h2>
+<h3 id="bundling">Bundling</h3>
+<p>The recommended way to bundle CTL is to use WebPack.</p>
+<p>We depend on WebPack’s <code>DefinePlugin</code> to conditionally
+load one of our dependency (<code>cardano-serialization-lib</code>)
+nodejs or browser version.</p>
+<p>That means that CTL <em>requires</em> bundling it the same way when
+used as a dependency, as we do in development. If you intend to use
+another bundler, something like <code>DefinePlugin</code> should be used
+to transform the imports from</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> lib<span class="op">;</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="kw">typeof</span> BROWSER_RUNTIME <span class="op">!=</span> <span class="st">&quot;undefined&quot;</span> <span class="op">&amp;&amp;</span> BROWSER_RUNTIME) {</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  lib <span class="op">=</span> <span class="pp">require</span>(<span class="st">&quot;@emurgo/cardano-serialization-lib-browser&quot;</span>)<span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  lib <span class="op">=</span> <span class="pp">require</span>(<span class="st">&quot;@emurgo/cardano-serialization-lib-nodejs&quot;</span>)<span class="op">;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div>
+<p>to only one of the variants.</p>
+<p>Our default <a href="../webpack.config.js">WebPack config</a> uses
+<code>BROWSER_RUNTIME</code> environment variable to differentiate
+between two bundling options.</p>
+<p>The reason why we are tied to WebPack is that it is one of the few
+bundlers that support async WASM imports.</p>
+<p>There’s <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/issues/79#issuecomment-1257036068">a
+claim that Vite bundler can also be used</a>, although we don’t
+officially support this method.</p>
+<h3 id="wrapping-ctl-into-a-js-interface">Wrapping CTL into a JS
+interface</h3>
+<p>Some users may want to provide a small set of APIs behind a JS/TS
+interface, instead of dealing with PureScript code.</p>
+<p>There’s nothing specific to be done for CTL (it’s a normal PureScript
+project), so <a
+href="https://book.purescript.org/chapter10.html#calling-purescript-from-javascript">this
+PureScript guide</a> may be of help. Note that our PureScript version is
+using CommonJS modules and not ES modules.</p>
+</body>
+</html>

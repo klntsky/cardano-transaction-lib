@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Blockfrost backend</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+      }
+    pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { font-weight: bold; } /* Alert */
+    code span.an { font-style: italic; } /* Annotation */
+    code span.cf { font-weight: bold; } /* ControlFlow */
+    code span.co { font-style: italic; } /* Comment */
+    code span.cv { font-style: italic; } /* CommentVar */
+    code span.do { font-style: italic; } /* Documentation */
+    code span.dt { text-decoration: underline; } /* DataType */
+    code span.er { font-weight: bold; } /* Error */
+    code span.in { font-style: italic; } /* Information */
+    code span.kw { font-weight: bold; } /* Keyword */
+    code span.pp { font-weight: bold; } /* Preprocessor */
+    code span.wa { font-style: italic; } /* Warning */
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">Blockfrost backend</h1> -->
+</header>
+<h1 id="blockfrost-backend">Blockfrost backend</h1>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<ul>
+<li><a href="#setting-up-a-blockfrost-powered-test-suite">Setting up a
+Blockfrost-powered test suite</a>
+<ul>
+<li><a href="#getting-an-api-key">Getting an API key</a></li>
+<li><a href="#generating-private-keys">Generating private keys</a></li>
+<li><a href="#funding-your-address">Funding your address</a></li>
+<li><a href="#setting-up-a-directory-for-temporary-keys">Setting up a
+directory for temporary keys</a></li>
+<li><a href="#providing-an-api-endpoint-url">Providing an API endpoint
+URL</a></li>
+<li><a href="#setting-tx-confirmation-delay">Setting Tx confirmation
+delay</a></li>
+<li><a href="#test-suite-setup-on-purescript-side">Test suite setup on
+PureScript side</a></li>
+</ul></li>
+<li><a href="#running-contracts-with-blockfrost">Running
+<code>Contract</code>s with Blockfrost</a></li>
+<li><a href="#limitations">Limitations</a>
+<ul>
+<li><a href="#performance">Performance</a></li>
+<li><a href="#transaction-chaining">Transaction chaining</a></li>
+<li><a href="#getting-pool-parameters">Getting pool parameters</a></li>
+</ul></li>
+<li><a href="#see-also">See also</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<p>Thanks to <a
+href="https://cardano.ideascale.com/c/idea/420791">Catalyst Fund9</a>,
+CTL has been extended with support for <a
+href="https://blockfrost.io/">Blockfrost</a> as an alternative query
+layer.</p>
+<p>The users <a href="#running-contracts-with-blockfrost">can now
+run</a> CTL contracts just by providing a Blockfrost API key and some
+ADA for the Contract to consume.</p>
+<p>For testing, we offer an automated test engine that allows to run any
+<code>ContractTest</code> test suite with Blockfrost.</p>
+<h2 id="setting-up-a-blockfrost-powered-test-suite">Setting up a
+Blockfrost-powered test suite</h2>
+<p>Public Blockfrost instances have endpoints for different networks. By
+default, the test suite is configured to run on
+<code>preview</code>.</p>
+<p>The configuration is stored in environment variables defined in <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/test/blockfrost.env"><code>test/blockfrost.env</code> file</a>, or a
+similar one in your project if it is initialized from the template.</p>
+<p>Here’s how to populate this configuration file to be ready for
+use:</p>
+<h3 id="getting-an-api-key">Getting an API key</h3>
+<p>Go to https://blockfrost.io to generate a new API key and specify it
+as <code>BLOCKFROST_API_KEY</code> in the config.</p>
+<h3 id="generating-private-keys">Generating private keys</h3>
+<p>Follow
+https://developers.cardano.org/docs/stake-pool-course/handbook/keys-addresses/
+to generate a private payment key (and, optionally, a stake key).</p>
+<p>It should look like this:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode json"><code class="sourceCode json"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;type&quot;</span><span class="fu">:</span> <span class="st">&quot;PaymentSigningKeyShelley_ed25519&quot;</span><span class="fu">,</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;description&quot;</span><span class="fu">:</span> <span class="st">&quot;Payment Signing Key&quot;</span><span class="fu">,</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">&quot;cborHex&quot;</span><span class="fu">:</span> <span class="st">&quot;...&quot;</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">}</span></span></code></pre></div>
+<p>Get the address for this payment key (and, optionally, a stake key),
+following the guide above.</p>
+<p>If you are using a testnet, replace <code>--mainnet</code> flag in
+the shell command with <code>--testnet-magic YOUR_NETWORK_MAGIC</code>,
+where <code>YOUR_NETWORK_MAGIC</code> is a genesis parameter of the
+network.</p>
+<p>For public testnets, get it from <a
+href="https://github.com/input-output-hk/cardano-configurations">cardano-configurations
+repo</a>. The location is
+<code>network/YOUR_NETWORK_NAME/genesis/shelley.json</code>, look for
+<code>networkMagic</code> key.</p>
+<p>The common values are 1 for <code>preprod</code> and 2 for
+<code>preview</code>.</p>
+<h3 id="funding-your-address">Funding your address</h3>
+<p>Fund your address using the <a
+href="https://docs.cardano.org/cardano-testnet/tools/faucet">testnet
+faucet</a>. Make sure you are sending the funds in the correct
+network.</p>
+<p>Point the test suite to your keys by setting
+<code>PRIVATE_PAYMENT_KEY_FILE</code> and
+<code>PRIVATE_STAKE_KEY_FILE</code> to the paths of your
+<code>.skey</code> files.</p>
+<p>If you are going to use an enterprise address (without a staking
+credential component), then do not provide the staking key file. The
+choice of using either type of addresses does not affect anything,
+because the test suite will be using the address only to distribute
+funds to other, temporary addresses.</p>
+<h3 id="setting-up-a-directory-for-temporary-keys">Setting up a
+directory for temporary keys</h3>
+<p>During testing, the test engine will move funds around according to
+the UTxO distribution specifications provided via
+<code>Contract.Test.withWallets</code> calls in the test bodies. It will
+generate private keys as needed on the fly. The private keys will be
+stored in a special directory, to prevent loss of funds in case the test
+suite suddently exits. Set <code>BACKUP_KEYS_DIR</code> to an existing
+directory where you would like the keys to be stored.</p>
+<p>In this directory, keys will be stored in subdirs named as addresses
+that are derived from these keys. Most of these directories will contain
+a file named <code>inactive</code>. It indicates that the test suite
+assumes that there are no funds left (because they have been withdrawn
+successfully).</p>
+<p>Each test run generates fresh keys that will be stored indefinitely,
+and it’s up to the user to decide when to delete the corresponding
+directories. The reason why the keys are not being disposed of
+automatically is because there may be some on-chain state uniquely tied
+to them that the user may not want to lose access to.</p>
+<h3 id="providing-an-api-endpoint-url">Providing an API endpoint
+URL</h3>
+<p>Blockfrost dashboard provides endpoint URLs for your projects.</p>
+<p>In the test suite configuration, parts of the endpoint URLs are
+specified separately,
+e.g. <code>https://cardano-preview.blockfrost.io/api/v0/</code>
+becomes:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">BLOCKFROST_PORT</span><span class="op">=</span>443 <span class="co"># https -&gt; 443, http -&gt; 80</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">BLOCKFROST_HOST</span><span class="op">=</span>cardano-preview.blockfrost.io</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">BLOCKFROST_SECURE</span><span class="op">=</span>true <span class="co"># Use HTTPS</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">BLOCKFROST_PATH</span><span class="op">=</span><span class="st">&quot;/api/v0&quot;</span></span></code></pre></div>
+<h3 id="setting-tx-confirmation-delay">Setting Tx confirmation
+delay</h3>
+<p>We introduce an artificial delay after Tx confirmation to ensure that
+the changes propagate to Blockfrost’s query layer. Blockfrost does not
+update the query layer state atomically (proxied Ogmios eval-tx endpoint
+seems to lag behind the DB), and we have no way to query it, so this is
+the best workaround we can have. If the tests are failing because the
+effects of the transaction do not seem to propagate (the symptom is
+unexpected errors from Ogmios), it is possible to increase the delay by
+setting the environment variable for the test suite:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">export</span> <span class="va">TX_CONFIRMATION_DELAY_SECONDS</span><span class="op">=</span>30</span></code></pre></div>
+<p>The “safe” value in practice is 30 seconds.</p>
+<p>If there’s a problem with UTxO set syncrhonization, most commonly
+Blockfrost returns error code 400 on transaction submission:</p>
+<pre><code>[TRACE] 2023-02-16T12:26:13.019Z { body: &quot;{\&quot;error\&quot;:\&quot;Bad Request\&quot;,\&quot;message\&quot;:\&quot;\\\&quot;transaction submit error ShelleyTxValidationError ShelleyBasedEraBabbage (ApplyTxError [UtxowFailure (UtxoFailure (FromAlonzoUtxoFail (ValueNotConservedUTxO ...</code></pre>
+<h3 id="test-suite-setup-on-purescript-side">Test suite setup on
+PureScript side</h3>
+<p><code>executeContractTestsWithBlockfrost</code> is a helper function
+that reads all the variables above and takes care of contract
+environment setup.</p>
+<p>It accepts a number of arguments:</p>
+<ol type="1">
+<li>A test spec config, e.g. <code>Test.Spec.Runner.defaultConfig</code>
+- it’s probably better to increase the timeout.</li>
+<li>A <code>Contract</code> config,
+e.g. <code>Contract.Config.testnetConfig</code></li>
+<li>An optional CTL runtime config</li>
+<li>A <code>ContractTest</code> suite</li>
+</ol>
+<p>See <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/test/Blockfrost/Contract.purs">this example</a>, which can be executed
+with <code>npm run blockfrost-test</code> command. It will automatically
+load the exported variables from <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/test/blockfrost.env"><code>test/blockfrost.env</code></a>.</p>
+<h2 id="running-contracts-with-blockfrost">Running
+<code>Contract</code>s with Blockfrost</h2>
+<p><code>mkBlockfrostBackendParams</code> can be called on a populated
+<code>BlockfrostBackendParams</code> record to create a
+<code>QueryBackendParams</code> value. <code>backendParams</code> field
+of <code>ContractParams</code> uses a value of this type. And
+<code>ContractParams</code> can in turn be used with
+<code>runContract</code>.</p>
+<pre><code>type BlockfrostBackendParams =
+  { blockfrostConfig :: ServerConfig
+  , blockfrostApiKey :: Maybe String
+  , confirmTxDelay :: Maybe Seconds
+  }</code></pre>
+<p>For convenience, use
+<code>blockfrostPublicMainnetServerConfig</code>,
+<code>blockfrostPublicPreviewServerConfig</code> or
+<code>blockfrostPublicPreprodServerConfig</code> for pre-configured
+<code>ServerConfig</code> setups.</p>
+<p>Note that it is possible to use CTL runtime services alongside with
+Blockfrost for queries it does not support by modifying the
+<code>QueryBackendParams</code> value manually
+(<code>CtlBackendParams</code> is an optional parameter of its
+constructor).</p>
+<h2 id="limitations">Limitations</h2>
+<h3 id="performance">Performance</h3>
+<p>The main disadvantage of using Blockfrost in comparison with CTL
+backend is speed of Tx confirmation (see <a
+href="#6-setting-tx-confirmation-delay">here</a> for explanation).</p>
+<h3 id="transaction-chaining">Transaction chaining</h3>
+<p>Blockfrost is proxying <a href="https://ogmios.dev">Ogmios</a> to
+provide an endpoint for execution units evaluation. This Ogmios endpoint
+normally <a
+href="https://ogmios.dev/mini-protocols/local-tx-submission/#additional-utxo-set">accepts
+a parameter</a> that allows to specify additional UTxOs that should be
+considered. Transaction chaining is relying on this feature to allow
+Ogmios to “see” the newly created UTxOs. But Blockfrost seems to not
+pass this parameter to Ogmios (<a
+href="https://github.com/blockfrost/blockfrost-backend-ryo/issues/85">issue</a>).</p>
+<h3 id="getting-pool-parameters">Getting pool parameters</h3>
+<p><code>getPoolParameters</code> function only runs with Ogmios
+backend, see <a
+href="https://github.com/blockfrost/blockfrost-backend-ryo/issues/82">here</a>
+for more context.</p>
+<p>It is not used for constraints resolution, the only way to make it
+run is to call it manually.</p>
+<h2 id="see-also">See also</h2>
+<ul>
+<li><a href="./test-utils.html">Testing utilities for CTL</a>.</li>
+</ul>
+</body>
+</html>

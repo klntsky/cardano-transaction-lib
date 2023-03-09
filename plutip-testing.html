@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CTL integration with Plutip</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">CTL integration with Plutip</h1> -->
+</header>
+<h1 id="ctl-integration-with-plutip">CTL integration with Plutip</h1>
+<p><a href="https://github.com/mlabs-haskell/plutip">Plutip</a> is a
+tool to run private Cardano testnets. CTL provides integration with
+Plutip via a <a
+href="https://github.com/mlabs-haskell/plutip/pull/79"><code>plutip-server</code>
+binary</a> that exposes an HTTP interface to control local Cardano
+clusters.</p>
+<p><strong>Table of Contents</strong>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --></p>
+<ul>
+<li><a href="#architecture">Architecture</a></li>
+<li><a href="#testing-contracts">Testing contracts</a>
+<ul>
+<li><a href="#testing-in-aff-context">Testing in Aff context</a></li>
+<li><a href="#testing-with-mote">Testing with Mote</a></li>
+<li><a href="#note-on-sigint">Note on SIGINT</a></li>
+<li><a href="#testing-with-nix">Testing with Nix</a></li>
+</ul></li>
+<li><a href="#using-addresses-with-staking-key-components">Using
+addresses with staking key components</a>
+<ul>
+<li><a href="#see-also">See also</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="architecture">Architecture</h2>
+<p>CTL depends on a number of binaries in the <code>$PATH</code> to
+execute Plutip tests:</p>
+<ul>
+<li><code>plutip-server</code> to launch a local
+<code>cardano-node</code> cluster</li>
+<li><a href="https://ogmios.dev/"><code>ogmios</code></a></li>
+<li><a
+href="https://cardanosolutions.github.io/kupo/"><code>kupo</code></a></li>
+</ul>
+<p>All of these are provided by CTL’s <code>overlays.runtime</code> (and
+are provided in CTL’s own <code>devShell</code>). You
+<strong>must</strong> use the <code>runtime</code> overlay or otherwise
+make the services available in your package set (e.g. by defining them
+within your own <code>overlays</code> when instantiating
+<code>nixpkgs</code>) as <code>purescriptProject.runPlutipTest</code>
+expects all of them.</p>
+<p>The services are NOT run by <code>docker-compose</code> as is the
+case with <code>launchCtlRuntime</code>: they are started and stopped on
+each CTL <code>Contract</code> execution by CTL.</p>
+<h2 id="testing-contracts">Testing contracts</h2>
+<p>There are two entry points to the testing interface:
+<code>Contract.Test.Plutip.runPlutipContract</code> and
+<code>Contract.Test.Plutip.testPlutipContracts</code>. They work
+similarly, the difference being that <code>runPlutipContract</code>
+accepts a single <code>Contract</code> and runs in <code>Aff</code>,
+whereas <code>testPlutipContracts</code> transforms a <code>MoteT</code>
+test tree of <code>PlutipTest</code> into <code>Aff</code>. <a
+href="https://github.com/garyb/purescript-mote">Mote</a> is a DSL for
+defining tests, and combined with <code>testPlutipContracts</code> you
+can use a single plutip instance to run multiple indepedent tests.</p>
+<h3 id="testing-in-aff-context">Testing in Aff context</h3>
+<p><code>Contract.Test.Plutip.runPlutipContract</code>’s function type
+is as follows:</p>
+<pre class="purescript"><code>runPlutipContract
+  :: forall (distr :: Type) (wallets :: Type) (a :: Type)
+   . UtxoDistribution distr wallets
+  =&gt; PlutipConfig
+  -&gt; distr
+  -&gt; (wallets -&gt; Contract a)
+  -&gt; Aff a</code></pre>
+<p><code>distr</code> is a specification of how many wallets and with
+how much funds should be created. It should either be a
+<code>unit</code> (for no wallets), nested tuples containing
+<code>Array BigInt</code> or an <code>Array</code> of
+<code>Array BigInt</code>, where each element of the
+<code>Array BigInt</code> specifies an UTxO amount in Lovelaces
+(0.000001 Ada).</p>
+<p>The <code>wallets</code> argument is either a <code>Unit</code>, a
+tuple of <code>KeyWallet</code>s (with the same nesting level as in
+<code>distr</code>, which is guaranteed by
+<code>UtxoDistribution</code>) or an <code>Array KeyWallet</code>.</p>
+<p><code>wallets</code> should be pattern-matched on, and its components
+should be passed to <code>withKeyWallet</code>:</p>
+<p>An example <code>Contract</code> with two actors using nested
+tuples:</p>
+<pre class="purescript"><code>let
+  distribution :: Array BigInt /\ Array BigInt
+  distribution =
+    [ BigInt.fromInt 1_000_000_000
+    , BigInt.fromInt 2_000_000_000
+    ] /\
+      [ BigInt.fromInt 2_000_000_000 ]
+runPlutipContract config distribution \(alice /\ bob) -&gt; do
+  withKeyWallet alice do
+    pure unit -- sign, balance, submit, etc.
+  withKeyWallet bob do
+    pure unit -- sign, balance, submit, etc.</code></pre>
+<p>An example <code>Contract</code> with two actors using
+<code>Array</code>:</p>
+<pre class="purescript"><code>let
+  distribution :: Array (Array BigInt)
+  distribution =
+    [ [ BigInt.fromInt 1_000_000_000, BigInt.fromInt 2_000_000_000]
+    , [ BigInt.fromInt 2_000_000_000 ]
+    ]
+runPlutipContract config distribution \wallets -&gt; do
+  traverse_ ( \wallet -&gt; do
+                withKeyWallet wallet do
+                  pure unit -- sign, balance, submit, etc.
+            )
+            wallets</code></pre>
+<p>In most cases at least two UTxOs per wallet are needed (one of which
+will be used as collateral, so it should exceed <code>5_000_000</code>
+Lovelace).</p>
+<p>Note that during execution WebSocket connection errors may occur.
+However, payloads are re-sent after these errors, so you can ignore
+them. <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/issues/670">These
+errors will be suppressed in the future.</a>.</p>
+<h3 id="testing-with-mote">Testing with Mote</h3>
+<p><code>Contract.Test.Plutip.testPlutipContracts</code> type is as
+follows:</p>
+<pre class="purescript"><code>testPlutipContracts
+  :: PlutipConfig
+  -&gt; MoteT Aff PlutipTest Aff Unit
+  -&gt; MoteT Aff (Aff Unit) Aff Unit</code></pre>
+<p>The final <code>MoteT</code> type requires the bracket, test and test
+building type to all be in <code>Aff</code>. The brackets cannot be
+ignored in the <code>MoteT</code> test runner, as it is what allows a
+single plutip instance to persist over multiple tests.</p>
+<p>To create tests of type <code>PlutipTest</code>, you must either use
+<code>Contract.Test.Plutip.withWallets</code> or
+<code>Contract.Test.Plutip.noWallet</code>, the latter being a helper
+alias of the first:</p>
+<pre class="purescript"><code>withWallets
+  :: forall (distr :: Type) (wallets :: Type)
+   . UtxoDistribution distr wallets
+  =&gt; distr
+  -&gt; (wallets -&gt; Contract Unit)
+  -&gt; PlutipTest
+
+noWallet :: Contract Unit -&gt; PlutipTest
+noWallet test = withWallets unit (const test)</code></pre>
+<p>The type is very similar to that of <code>runPlutipContract</code>,
+and distributions are handled in the same way. The following is an
+example of running multiple tests under the same plutip instance:</p>
+<pre class="purescript"><code>suite :: MoteT Aff (Aff Unit) Aff
+suite = testPlutipContracts config do
+  test &quot;Test 1&quot; do
+    let
+      distribution :: Array BigInt /\ Array BigInt
+      distribution = ...
+    withWallets distribution \(alice /\ bob) -&gt; do
+      ...
+
+  test &quot;Test 2&quot; do
+    let
+      distribution :: Array BigInt
+      distribution = ...
+    withWallets distribution \alice -&gt; do
+      ...
+
+  test &quot;Test 3&quot; do
+    noWallet do
+      ...</code></pre>
+<h3 id="note-on-sigint">Note on SIGINT</h3>
+<p>Due to
+<code>testPlutipContracts</code>/<code>runPlutipContract</code> adding
+listeners to the SIGINT signal, node’s default behaviour of exiting on
+that signal no longer occurs. This was done to add cleanup handlers and
+let them run in parallel instead of exiting eagerly, which is possible
+when running multiple clusters in parallel. To restore the exit
+behaviour, we provide helpers to cancel an <code>Aff</code> fiber and
+set the exit code, to let node shut down gracefully when no more events
+are to be processed.</p>
+<pre class="purescript"><code>...
+import Contract.Test.Utils (exitCode, interruptOnSignal)
+import Data.Posix.Signal (Signal(SIGINT))
+import Effect.Aff (cancelWith, effectCanceler, launchAff)
+
+main :: Effect Unit
+main = interruptOnSignal SIGINT =&lt;&lt; launchAff do
+  flip cancelWith (effectCanceler (exitCode 1)) do
+    ... test suite in Aff ...</code></pre>
+<h3 id="testing-with-nix">Testing with Nix</h3>
+<p>You can run Plutip tests via CTL’s <code>purescriptProject</code> as
+well. After creating your project, you can use the
+<code>runPlutipTest</code> attribute to create a Plutip testing
+environment that is suitable for use with your flake’s
+<code>checks</code>. An example:</p>
+<pre class="nix"><code>{
+  some-plutip-test = project.runPlutipTest {
+    name = &quot;some-plutip-test&quot;;
+    testMain = &quot;Test.MyProject.Plutip&quot;;
+    # The rest of the arguments are passed through to `runPursTest`:
+    env = { SOME_ENV_VAR = &quot;${some-value}&quot;; };
+  };
+}</code></pre>
+<h2 id="using-addresses-with-staking-key-components">Using addresses
+with staking key components</h2>
+<p>It’s possible to use stake keys with Plutip.
+<code>Contract.Test.Plutip.withStakeKey</code> function can be used to
+modify the distribution spec:</p>
+<pre class="purescript"><code>let
+  privateStakeKey :: PrivateStakeKey
+  privateStakeKey = wrap $ unsafePartial $ fromJust
+    $ privateKeyFromBytes =&lt;&lt; hexToRawBytes
+      &quot;633b1c4c4a075a538d37e062c1ed0706d3f0a94b013708e8f5ab0a0ca1df163d&quot;
+  aliceUtxos =
+    [ BigInt.fromInt 2_000_000_000
+    , BigInt.fromInt 2_000_000_000
+    ]
+  distribution = withStakeKey privateStakeKey aliceUtxos</code></pre>
+<p>Although stake keys serve no real purpose in plutip context, they
+allow to use base addresses, and thus allow to have the same code for
+plutip testing, in-browser tests and production.</p>
+<p>Note that CTL re-distributes tADA from payment key-only
+(“enterprise”) addresses to base addresses, which requires a few
+transactions before the test can be run. Plutip can currently handle
+only enterprise addreses (see <a
+href="https://github.com/mlabs-haskell/plutip/issues/103">this
+issue</a>).</p>
+<h3 id="see-also">See also</h3>
+<ul>
+<li>To actually write the test bodies, <a
+href="./test-utils.html">assertions library</a> can be useful.</li>
+</ul>
+</body>
+</html>

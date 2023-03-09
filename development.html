@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Development</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">Development</h1> -->
+</header>
+<h1 id="development">Development</h1>
+<p>This document outlines development workflows for CTL itself. You may
+also wish to read our documentation on CTL’s <a
+href="./runtime.html">runtime dependencies</a>, which are a prerequisite
+for most development.</p>
+<p><strong>Table of Contents</strong></p>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<ul>
+<li><a href="#nix-environment">Nix environment</a></li>
+<li><a href="#launching-services-for-development">Launching services for
+development</a></li>
+<li><a href="#building-testing-and-running-the-ps-project">Building,
+testing, and running the PS project</a></li>
+<li><a href="#generating-ps-documentation">Generating PS
+documentation</a></li>
+<li><a href="#adding-psjs-dependencies">Adding PS/JS dependencies</a>
+<ul>
+<li><a href="#purescript">Purescript</a></li>
+<li><a href="#js">JS</a></li>
+</ul></li>
+<li><a href="#switching-development-networks">Switching development
+networks</a></li>
+<li><a href="#maintaining-the-template">Maintaining the
+template</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="nix-environment">Nix environment</h2>
+<p>This project uses Nix flakes. In order to use flakes, you will need
+Nix version 2.4 or greater. You also need to enable additional
+experimental features. Make sure you have the following enabled in your
+<code>nix.conf</code> (typically located in <code>/etc/nix/</code> or
+<code>~/.config/nix/</code>) or in <code>nix.extraOptions</code> in your
+NixOS configuration:</p>
+<pre><code>experimental-features = nix-command flakes</code></pre>
+<p>You may also choose to enable these every time you use
+<code>nix</code> commands (and without modifying your
+<code>nix.conf</code>) by passing the following command-line
+options:</p>
+<pre><code>nix &lt;COMMAND&gt; --extra-experimental-features nix-command --extra-experimental-features flakes</code></pre>
+<p>Running <code>nix develop</code> in the root of the repository will
+place you in a development environment with all of the necessary
+executables, tools, config, etc… to:</p>
+<ul>
+<li>build the project or use the repl with <code>spago</code></li>
+<li>use <code>npm</code> and related commands; all of the project’s JS
+dependencies are symlinked from the Nix store into
+<code>node_modules</code> in the repository root</li>
+<li>use Ogmios and other tools with the correct configurations, socket
+path, etc… These are also set in the <code>devShell</code>’s
+<code>shellHook</code></li>
+</ul>
+<p><strong>NOTE</strong>: As the Nix <code>devShell</code> currently
+symlinks the project’s <code>node_modules</code>, <strong>do
+not</strong> use <code>npm install</code> in order to develop with
+<code>npm</code>. Use <code>nix develop</code> as noted above</p>
+<h2 id="launching-services-for-development">Launching services for
+development</h2>
+<p>To develop locally, you can use one the CTL flake to launch all
+required services (using default configuration values):</p>
+<ul>
+<li><p>The easiest way: <code>nix run -L .#ctl-runtime</code> will both
+build and run the services</p></li>
+<li><p>The same, but indirectly in your shell:</p>
+<pre><code>$ nix build -L .#ctl-runtime
+$ arion --prebuilt-file ./result up</code></pre></li>
+</ul>
+<h2 id="building-testing-and-running-the-ps-project">Building, testing,
+and running the PS project</h2>
+<ul>
+<li>To build the project <strong>without bundling and for a NodeJS
+environment</strong>:
+<ul>
+<li><code>nix build</code> <em>or</em></li>
+<li><code>spago build</code></li>
+</ul></li>
+<li>To test the project, currently only supported when running in a
+NodeJS environment:
+<ul>
+<li>Use <code>npm run test</code>, or, if you need to test some specific
+functionality:
+<ul>
+<li><code>npm run unit-test</code> for unit tests</li>
+<li><code>npm run integration-test</code> for integration tests
+(requires ctl-runtime running)</li>
+<li><code>npm run plutip-test</code> for Plutip integration tests (does
+not require ctl-runtime)</li>
+</ul></li>
+<li><code>nix build .#checks.&lt;SYSTEM&gt;.ctl-unit-test</code> will
+build and run the unit tests (useful for CI)</li>
+</ul></li>
+<li>To run or build/bundle the project for the browser:
+<ul>
+<li><code>npm run e2e-serve</code> will start a Webpack development
+server at <code>localhost:4008</code></li>
+<li><code>npm run build</code> will output a Webpack-bundled example
+module to <code>dist</code> (or
+<code>nix build -L .#ctl-example-bundle-web</code> to build an example
+module using Nix into <code>./result/</code>)</li>
+</ul></li>
+</ul>
+<p>By default, Webpack will build a <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/examples/ByUrl.purs">Purescript module</a> that serves multiple example
+<code>Contract</code>s depending on URL (see <a
+href="./e2e-testing.html#serving-the-contract-to-be-tested">here</a>).
+You can point Webpack to another Purescript entrypoint by changing the
+<code>ps-bundle</code> variable in the Makefile or in the
+<code>main</code> argument in the flake’s
+<code>packages.ctl-examples-bundle-web</code>.</p>
+<p>You will also need a light wallet extension pre-configured.</p>
+<p><strong>Note</strong>: The <code>BROWSER_RUNTIME</code> environment
+variable must be set to <code>1</code> in order to build/bundle the
+project properly for the browser
+(e.g. <code>BROWSER_RUNTIME=1 webpack ...</code>). For Node
+environments, leave this variable unset or set it to <code>0</code>.</p>
+<p><strong>Note</strong>: The <code>KUPO_HOST</code> environment
+variable must be set the base URL of the Kupo service in order to
+successfully run the project for the browser
+(e.g. <code>KUPO_HOST=http://localhost:1442</code>), otherwise all
+requests to Kupo will fail.</p>
+<h2 id="generating-ps-documentation">Generating PS documentation</h2>
+<p>CTL PureScript docs are publicly deployed <a
+href="https://plutonomicon.github.io/cardano-transaction-lib/">here</a>.</p>
+<ul>
+<li>To build the documentation as HTML:
+<ul>
+<li><code>spago docs</code></li>
+</ul></li>
+<li>To build and open the documentation in your browser:
+<ul>
+<li><code>spago docs --open</code></li>
+</ul></li>
+<li>To build the documentation as Markdown:
+<ul>
+<li><code>spago docs --format markdown</code></li>
+</ul></li>
+</ul>
+<p>The documentation will be generated in the
+<code>./generated_docs/html</code> directory, which contains an
+<code>index.html</code> which lists all modules by default. At this
+index is a checkbox to toggle viewing by package, and all the modules
+defined in our package will be available under
+<code>cardano-transaction-lib</code>.</p>
+<p>Alternatively, you can view the documentation with
+<code>nix run -L .#docs</code> and opening <code>localhost:8080</code>
+in your browser. <code>nix build -L .#docs</code> will produce a
+<code>result</code> folder containing the documentation.</p>
+<h2 id="adding-psjs-dependencies">Adding PS/JS dependencies</h2>
+<h3 id="purescript">Purescript</h3>
+<p>Unfortunately, we rely on <code>spago2nix</code>, which requires
+autogenerated Nix code (<code>spago-packages.nix</code>). This means
+that it is possible for our declared Purescript dependencies to drift
+from the autogen Nix code we import in to build Purescript derivations.
+If you add either a Purescript dependency, make sure to run
+<code>spago2nix generate</code> from within the Nix shell to update the
+autogen code from <code>spago2nix</code>. Do <strong>not</strong> edit
+<code>spago-packages.nix</code> by hand, or the build will likely
+break.</p>
+<p>Don’t forget to update the <a
+href="../templates/ctl-scaffold/packages.dhall">template
+<code>packages.dhall</code></a> to use the exact same versions.</p>
+<h3 id="js">JS</h3>
+<p>If you add a dependency to <code>package.json</code>, make sure to
+update the lockfile with <code>npm i --package-lock-only</code>
+<em>before</em> entering a new dev shell, otherwise the
+<code>shellHook</code> will fail. You’ll need to remove the existing
+symlinked <code>node_modules</code> to do this (for some reason
+<code>npm</code> will <em>still</em> try to write to the
+<code>node_modules</code>, but will fail because they’re symlinked to
+the Nix store).</p>
+<p>Don’t forget to update the <a
+href="../templates/ctl-scaffold/package.json">template
+<code>package.json</code></a> to use the exact same versions, and then
+make sure the <a
+href="../templates/ctl-scaffold/package-lock.json"><code>package-lock.json</code>
+file</a> is updates as well.</p>
+<h2 id="switching-development-networks">Switching development
+networks</h2>
+<p>Set new <code>network.name</code> and <code>network.magic</code> in
+<code>runtime.nix</code>. Also see <a
+href="./runtime.html#changing-network-configurations">Changing network
+configurations</a></p>
+<h2 id="maintaining-the-template">Maintaining the template</h2>
+<p><a href="../templates/ctl-scaffold/">The template</a> must be kept
+up-to-date with the repo. Although there are some checks for common
+problems in CI, it’s still possible to forget to update the
+<code>package-lock.json</code> file.</p>
+<p><a href="../scripts/template-check.sh">This helper script</a> can be
+used to make sure the template can be initialized properly from a given
+revision.</p>
+</body>
+</html>

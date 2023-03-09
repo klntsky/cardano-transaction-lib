@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CTL Query Layers</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">CTL Query Layers</h1> -->
+</header>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<ul>
+<li><a href="#ctl-query-layers">CTL Query Layers</a>
+<ul>
+<li><a href="#walletbackend-inconsistency">Wallet/Backend
+Inconsistency</a>
+<ul>
+<li><a href="#configuring-synchronization-behavior">Configuring
+synchronization behavior</a></li>
+<li><a href="#synchronization-and-wallet-utxo-locking">Synchronization
+and wallet UTxO locking</a></li>
+<li><a href="#historical-notes">Historical notes</a></li>
+</ul></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h1 id="ctl-query-layers">CTL Query Layers</h1>
+<p>On Cardano, every running node has its own opinion on the set of
+currently unspent transaction outputs. Only <a
+href="https://en.wikipedia.org/wiki/Eventual_consistency">eventual
+consistency</a> is guaranteed.</p>
+<p>A <em>Query Layer</em> is a software that provides an API to interact
+with underlying cardano-node(s).</p>
+<p>In CTL context, the following query layers can be used, depending on
+backend choice:</p>
+<ul>
+<li><a href="https://ogmios.dev/">Ogmios</a> (<a
+href="./runtime.html#ctl-backend">CTL backend</a>)</li>
+<li><a href="https://cardanosolutions.github.io/kupo/">Kupo</a> (<a
+href="./runtime.html#ctl-backend">CTL backend</a>)</li>
+<li><a href="https://blockfrost.io/">Blockfrost</a> (<a
+href="./blockfrost.html">Blockfrost backend</a>)</li>
+<li><a href="https://cips.cardano.org/cips/cip30/">CIP-30 light wallet
+browser extensions</a> (any backend)</li>
+</ul>
+<h2 id="walletbackend-inconsistency">Wallet/Backend Inconsistency</h2>
+<p>Any dApp that interacts with a CIP-30 wallet has to deal with the
+inconsistency between local <code>cardano-node</code>-based query layer
+and light wallet query layer, especially when dApp workflow involves
+sending multiple interactions with the wallet in quick succession.</p>
+<p>Thus, the goal of the developers is to ensure that the set of UTxOs
+available to the wallet and the set of UTxOs the backend cardano-node
+knows about are <em>synchronized enough</em> to not cause errors when
+wallet or backend operations are performed. To give a few examples of
+potential issues, consider the following scenarios:</p>
+<ul>
+<li>A dApp tries to balance a transaction with UTxOs from the wallet
+that are not yet available in Ogmios or Blockfrost, causing an error
+response</li>
+<li>A transaction is passed for signing, but the wallet does not yet
+know about the UTxOs it spends, and thus refuses to sign it (this
+happens with Eternl)</li>
+</ul>
+<p>CTL tries to be smart when dealing with the issue, and it aims to let
+the user work with both query layers as if it was one. To achieve this
+guarantee, CTL follows three simple rules:</p>
+<ul>
+<li><strong>Rule 1</strong> Whenever there is a <em>wallet
+operation</em> the result of which depends on the set of available
+UTxOs, CTL delays the execution until it reaches a state where <em>all
+wallet UTxOs are known to the backend</em>. These operations are assumed
+to be <code>getWalletUtxos</code>, <code>getWalletCollateral</code> and
+<code>getWalletBalance</code>.</li>
+<li><strong>Rule 2</strong> Whenever there is a transaction
+<em><code>signTx</code></em> <a
+href="https://cips.cardano.org/cips/cip30/">CIP-30</a> call, the
+execution is delayed until all transaction inputs that come from one of
+the addresses controlled by the wallet <em>are known to the
+wallet</em>.</li>
+<li><strong>Rule 3</strong> Whenever CTL is asked to await for
+<em>transaction confirmation</em>, the execution is delayed until the
+<em>UTxOs that the transaction creates at wallet addresses</em> are
+visible to the wallet.</li>
+</ul>
+<p>The rules are implemented as 3 callable functions, which we call
+<em>synchronization primitives</em>:</p>
+<ol type="1">
+<li><code>Contract.Sync.syncBackendWithWallet :: Contract Unit</code> -
+wait for wallet UTxOs to appear on backend</li>
+<li><code>Contract.Sync.syncWalletWithTxInputs :: Array TransactionInput -&gt; Contract Unit</code>
+- wait for inputs to appear in the wallet</li>
+<li><code>Contract.Sync.syncWalletWithTransaction :: TransactionHash -&gt; Contract Unit</code>
+- wait for Tx outputs to appear in the wallet</li>
+</ol>
+<p>The developer does not have to call them manually, because by default
+all the synchronization primitives are enabled when CIP-30 wallets are
+used.</p>
+<h3 id="configuring-synchronization-behavior">Configuring
+synchronization behavior</h3>
+<p>Although stronger UTxO set consistency guarantees allow to develop
+more reliable applications in less time, some users may find the delays
+or remote call overhead not worth it.</p>
+<p>To give some examples, it may be known that:</p>
+<ul>
+<li>wallet UTxOs did not change in a while</li>
+<li>all the UTxOs a new transaction uses have long been settled in the
+wallet</li>
+<li>that the UTxOs a transaction creates at the wallet addresses will
+not be consumed again</li>
+</ul>
+<p>To account for these cases, synchronization primitives can be
+configured or disabled via <code>synchronizationParams</code> field of
+<code>ContractParams</code>:</p>
+<pre class="purescript"><code>type ContractSynchronizationParams =
+  { syncBackendWithWallet ::
+      { errorOnTimeout :: Boolean
+      , beforeCip30Methods :: Boolean
+      , beforeBalancing :: Boolean
+      }
+  , syncWalletWithTxInputs ::
+      { errorOnTimeout :: Boolean, beforeCip30Sign :: Boolean }
+  , syncWalletWithTransaction ::
+      { errorOnTimeout :: Boolean, beforeTxConfirmed :: Boolean }
+  }</code></pre>
+<ul>
+<li><code>before*</code> boolean value fields allow to enable or disable
+the delays (see above for correspondence between synchronization rules
+and function names).</li>
+<li><code>errorOnTimeout</code> field controls whether a given
+synchronization primitive should throw an exception when timeouts are
+reached, or just print a warning to the console. It is set to
+<code>false</code> by default, use
+<code>Contract.Config.strictSynchronizationParams</code> to throw.</li>
+<li>Use <code>Contract.Config.disabledSynchronizationParams</code> to
+disable synchronization completely (this brings back CTL pre-v5.1.0
+behavior)</li>
+</ul>
+<p>The timeouts themselves can be configured using
+<code>timeParams</code> field of <code>ContractParams</code>:</p>
+<pre class="purescript"><code>type ContractTimeParams =
+  { ...
+  , syncWallet :: { delay :: Milliseconds, timeout :: Seconds }
+  , syncBackend :: { delay :: Milliseconds, timeout :: Seconds }
+  }</code></pre>
+<p><code>delay</code> fields control intervals between synchronization
+checks.</p>
+<p>Note that it is possible to set <code>timeout</code> to
+<code>Seconds infinity</code>.</p>
+<h3 id="synchronization-and-wallet-utxo-locking">Synchronization and
+wallet UTxO locking</h3>
+<p><code>Contract.Utxos.utxosAt</code> function returns a set of UTxOs
+at a given address by calling Kupo or Blockfrost, depending on the
+backend. It seems reasonable to assume that if we call
+<code>utxosAt</code> at all wallet’s addresses we will get the same set
+of UTxOs that <a href="https://cips.cardano.org/cips/cip30/">CIP-30</a>
+<code>getUtxos</code> method would return (eventually). But it is not,
+in fact, true.</p>
+<p><em>UTxO locking</em> is a wallet feature that allows to hide certain
+UTxOs from results of CIP-30 calls, making them invisible to dApps.
+Among the wallets we support, it is currently only present in
+Eternl:</p>
+<figure>
+<img src="./images/eternl-utxo-locking.png"
+alt="Eternl UTxO locking feature in UI" />
+<figcaption aria-hidden="true">Eternl UTxO locking feature in
+UI</figcaption>
+</figure>
+<p>UTxO locking does not play well with
+<code>syncWalletWithTxInputs</code> and
+<code>syncWalletWithTransaction</code>, because the set of UTxOs these
+functions poll for may contain locked UTxOs, and thus the
+synchronization can fail by timeout (either with an exception or a
+console warning, see <code>errorOnTimeout</code> configuration parameter
+above).</p>
+<p>However, the developer can easily safeguard against this problem by
+following one simple rule:</p>
+<ul>
+<li><code>utxosAt</code> should not be used to get UTxOs present on
+wallet’s addresses. Instead, <code>Contract.Wallet.getWalletUtxos</code>
+should be used.</li>
+</ul>
+<p><code>utxosAt</code> will log a warning to the console when used with
+a wallet’s address.</p>
+<h3 id="historical-notes">Historical notes</h3>
+<p>Initially we underestimated the problem of UTxO set inconsistency
+between query layers and decided to just use our backend as a source of
+truth all the time, because sticking to CIP-30 just wouldn’t be enough
+for our needs. This decision led to subtle and non-reproducible problems
+in our clients dApps, so we wouldn’t suggest anyone to follow this
+path.</p>
+<p>Conceptually, the wallet is responsible for <em>owning</em> the
+UTxOs, so wallet developers may implement behaviors that would prevent
+us from making general assumptions about the wallet state.</p>
+<p>CTL <code>v5.1.0</code> introduces better consistency guarantees
+while not requiring the developer to change any code on their side - for
+the price of slight delays during the app runtime.</p>
+</body>
+</html>

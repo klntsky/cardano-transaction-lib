@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>CTL Secp256k1 Support</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">CTL Secp256k1 Support</h1> -->
+</header>
+<h1 id="ctl-secp256k1-support">CTL Secp256k1 Support</h1>
+<p>This document is a reference/explainer for the new CTL features
+introduced with the Chang Hardfork.</p>
+<p><strong>Table of contents</strong>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --></p>
+<ul>
+<li><a href="#overview">Overview</a></li>
+<li><a href="#usage">Usage</a></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="overview">Overview</h2>
+<p>See the <a
+href="https://iohk.io/en/blog/posts/2022/11/03/what-is-secp-and-how-it-drives-cross-chain-development-on-cardano/">What
+is SECP</a> for a general overview of what SECP is and how it effects
+the Cardano blockchain.</p>
+<p>For a more in depth oversight please see <a
+href="https://github.com/mlabs-haskell/CIPs/tree/c5bdd66fe49c19c341499f86cebaa2eef9e90b74/CIP-0049">Cip-49</a>.</p>
+<h2 id="usage">Usage</h2>
+<p><a
+href="https://github.com/mlabs-haskell/CIPs/tree/c5bdd66fe49c19c341499f86cebaa2eef9e90b74/CIP-0049">Cip-49</a>
+provides two new Plutus builtin functions for signature
+verification.</p>
+<p>Both functions take the following as Parameters: - A verification
+key; - An input to verify (either the message itself, or a hash); - A
+signature.</p>
+<p>The two functions are:</p>
+<p><strong>1. A verification function for <a
+href="https://en.bitcoin.it/wiki/Elliptic_Curve_Digital_Signature_Algorithm">ECDSA</a>
+signatures.</strong></p>
+<p><strong>2. A verification function for <a
+href="https://github.com/bitcoin/bips/blob/master/bip-0340.mediawiki">Schnorr</a>
+signatures.</strong></p>
+<p>CTL provides off-chain variants of these functions that work the same
+way (the only difference is that in CTL the arguments are typed, while
+in Plutus <code>BuiltinByteString</code>s are used).</p>
+<p>Additionally, CTL exposes functions that allow to work with private
+keys (derive from bytes, generate) and public keys (derive from a
+private key), as well as to sign arbitrary data or data hashes.</p>
+<p>All SECP256k1-related domain types (public keys, signatures and
+hashes) are made serialize-able to PlutusData to allow for simpler
+offchain/onchain interop.</p>
+<p><a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/src/Contract/Crypto/Secp256k1/ECDSA.purs">Public interface for ECDSA
+support in CTL</a></p>
+<p><a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/examples/ECDSA.purs">ECDSA verification usage example</a></p>
+<p><a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/src/Contract/Crypto/Secp256k1/Schnorr.purs">Public interface for
+Schnorr support in CTL</a></p>
+<p><a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/examples/Schnorr.purs">Schnorr verification usage example</a></p>
+<p>Both examples show how a signature that is constructed off-chain can
+be passed for on-chain verification.</p>
+</body>
+</html>

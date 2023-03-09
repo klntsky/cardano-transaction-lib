@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Transaction chaining with CTL</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">Transaction chaining with CTL</h1> -->
+</header>
+<!-- DOCTOC SKIP -->
+<h1 id="transaction-chaining-with-ctl">Transaction chaining with
+CTL</h1>
+<p>Transaction chaining on Cardano is the ability to send transactions
+that depend on each other in quick succession, without waiting for the
+previous transactions to be confirmed (not to be confused with
+transaction batching).</p>
+<p>In case the transactions come from multiple actors, some off-chain
+data delivery mechanism should be used - it’s up to the application
+developers to implement it.</p>
+<p>The only piece of data that is actually needed is the additional
+UTxOs that the CTL query layer is not (yet) aware of.
+<code>mustUseAdditionalUtxos</code> <a href="./balancing.html">balancer
+constraint</a> can be used for that, as shown in the <a
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/d7ef1d23f82ea383b5dcf85d86d21079878bebc9
+/examples/TxChaining.purs">transaction chaining example</a>.</p>
+</body>
+</html>

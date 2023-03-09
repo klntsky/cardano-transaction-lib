@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Configuring balancing process</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">Configuring balancing process</h1> -->
+</header>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+<ul>
+<li><a href="#configuring-balancing-process">Configuring balancing
+process</a>
+<ul>
+<li><a href="#balancer-constraints">Balancer constraints</a></li>
+<li><a href="#concurrent-spending">Concurrent spending</a></li>
+<li><a href="#synchronization">Synchronization</a></li>
+<li><a href="#balancing-process-limitations">Balancing process
+limitations</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h1 id="configuring-balancing-process">Configuring balancing
+process</h1>
+<p>Transaction balancing in Cardano is the process of finding a set of
+inputs and outputs that that sum up to zero, covering all the required
+fees for the transaction to be valid.</p>
+<h2 id="balancer-constraints">Balancer constraints</h2>
+<p>CTL allows tweaking the default balancer behavior by letting the user
+impose constraints on the UTxO set that is used in the process
+(<code>balanceTxWithConstraints</code>):</p>
+<ul>
+<li>providing additional UTxOs to use:
+<code>mustUseUtxosAtAddresses</code> /
+<code>mustUseUtxosAtAddress</code> /
+<code>mustUseAdditionalUtxos</code></li>
+<li>overriding change address: <code>mustSendChangeToAddress</code></li>
+<li>prevent certain UTxOs from being spent:
+<code>mustNotSpendUtxosWithOutRefs</code> /
+<code>mustNotSpendUtxoWithOutRef</code></li>
+<li>distribute token outputs equally between change UTxOs:
+<code>mustGenChangeOutsWithMaxTokenQuantity</code></li>
+</ul>
+<h2 id="concurrent-spending">Concurrent spending</h2>
+<p>Attempting to spend UTxOs concurrently leads to some of the
+transactions being rejected. To ensure that no concurrent spending is
+happening, CTL uses it’s own UTxO locking machinery.
+<code>balanceTxs</code> or <code>balanceTxsWithConstraints</code> can be
+used to construct multiple transactions at once, ensuring that the sets
+of inputs do not intersect.</p>
+<p>Obviously, the number of available UTxOs must be greater than the
+number of transactions. CTL will throw an exception if it’s not the
+case.</p>
+<h2 id="synchronization">Synchronization</h2>
+<p>Before balancing, CTL synchronizes the wallet with the query layer,
+i.e. waits until all UTxOs that the wallet returns are visible in the
+query layer. Thus the situation when the query layer refuses to validate
+a Tx (either during ex-units evaluation or on Tx submission) is only
+possible due to a rollback. Please see <a href="./query-layers.html">our
+docs for query layer synchronization</a>.</p>
+<h2 id="balancing-process-limitations">Balancing process
+limitations</h2>
+<p>It may be surprising at first, but balancing a transaction on Cardano
+is generally undecidable.</p>
+<p>This is because transaction fees depend on execution unit budgets of
+the validator scripts, and the execution paths of the scripts depend on
+the set of inputs, that the balancer attempts to provide to, in turn,
+cover the fees. It is a recursive process that continues until the cycle
+of adding new inputs, evaluating the fees and generating change outputs
+converges to some configuration of inputs and outputs, where sum of all
+inputs and outputs minus fees is zero.</p>
+<p>It is possible to intentionally craft a script with execution fees
+depending on the number of inputs in a non-trivial way, causing the
+balancer to enter a potentially infinite loop.</p>
+<p>Another problem is that the intermediate evaluations of the script
+that happen during balancer may fail. The balancer provides a guarantee
+that all script executions will only run on “pre-balanced” transactions
+(in our terminology). That means that CTL supports the scripts that rely
+on the transaction contexts they validate to be balanced.</p>
+</body>
+</html>

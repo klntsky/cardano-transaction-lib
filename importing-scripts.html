@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Importing scripts for use with CTL</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+      }
+    pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { font-weight: bold; } /* Alert */
+    code span.an { font-style: italic; } /* Annotation */
+    code span.cf { font-weight: bold; } /* ControlFlow */
+    code span.co { font-style: italic; } /* Comment */
+    code span.cv { font-style: italic; } /* CommentVar */
+    code span.do { font-style: italic; } /* Documentation */
+    code span.dt { text-decoration: underline; } /* DataType */
+    code span.er { font-weight: bold; } /* Error */
+    code span.in { font-style: italic; } /* Information */
+    code span.kw { font-weight: bold; } /* Keyword */
+    code span.pp { font-weight: bold; } /* Preprocessor */
+    code span.wa { font-style: italic; } /* Warning */
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+  <link rel="stylesheet" href="../scripts/pandoc.css" />
+  <center>
+    <a href="./index.html#documentation">back to contents</a>
+  </center>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<!-- <h1 class="title">Importing scripts for use with CTL</h1> -->
+</header>
+<h1 id="importing-scripts-for-use-with-ctl">Importing scripts for use
+with CTL</h1>
+<p><strong>Table of Contents</strong>
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE --></p>
+<ul>
+<li><a href="#importing-serialized-scripts">Importing serialized
+scripts</a></li>
+<li><a href="#serializing-plutus-scripts">Serializing Plutus scripts</a>
+<ul>
+<li><a href="#plutustx">PlutusTx</a></li>
+<li><a href="#plutarch">Plutarch</a></li>
+</ul></li>
+</ul>
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+<h2 id="importing-serialized-scripts">Importing serialized scripts</h2>
+<p>To use your own scripts, compile them to any subdirectory in the root
+of your project (where <code>webpack.config.js</code> is located) and
+add a relative path to <code>webpack.config.js</code> under the
+<code>resolve.alias</code> section. In CTL, we have the
+<code>Scripts</code> alias for this purpose. Note the capitalization of
+<code>Scripts</code>: it is necessary to disambiguate it from local
+folders.</p>
+<p>First, in your <code>webpack.config.js</code>, define an
+<code>alias</code> under <code>module.exports.resolve.alias</code> in
+order to <code>require</code> the compiled scripts from JS modules:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> path <span class="op">=</span> <span class="pp">require</span>(<span class="st">&quot;path&quot;</span>)<span class="op">;</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>module<span class="op">.</span><span class="at">exports</span> <span class="op">=</span> {</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="co">// ...</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="dt">resolve</span><span class="op">:</span> {</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">modules</span><span class="op">:</span> [<span class="bu">process</span><span class="op">.</span><span class="at">env</span><span class="op">.</span><span class="at">NODE_PATH</span>]<span class="op">,</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">extensions</span><span class="op">:</span> [<span class="st">&quot;.js&quot;</span>]<span class="op">,</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">fallback</span><span class="op">:</span> {</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>      <span class="co">// ...</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    }<span class="op">,</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="dt">alias</span><span class="op">:</span> {</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>      <span class="co">// You should update this path to the location of your compiled scripts,</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>      <span class="co">// relative to `webpack.config.js`</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>      <span class="dt">Scripts</span><span class="op">:</span> path<span class="op">.</span><span class="fu">resolve</span>(<span class="bu">__dirname</span><span class="op">,</span> <span class="st">&quot;fixtures/scripts&quot;</span>)<span class="op">,</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    }<span class="op">,</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  }<span class="op">,</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+<p>You must also add the following to
+<code>module.exports.module.rules</code>:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>module<span class="op">.</span><span class="at">exports</span> <span class="op">=</span> {</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">// ...</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">module</span><span class="op">:</span> {</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">rules</span><span class="op">:</span> [</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>      {</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        <span class="dt">test</span><span class="op">:</span> <span class="ss">/</span><span class="sc">\.</span><span class="ss">plutus</span><span class="sc">$</span><span class="ss">/i</span><span class="op">,</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        <span class="dt">type</span><span class="op">:</span> <span class="st">&quot;asset/source&quot;</span><span class="op">,</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>      }<span class="op">,</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>      <span class="co">// ...</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    ]<span class="op">,</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  }<span class="op">,</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+<p>This enables inlining your serialized scripts in <code>.js</code>
+files, to then be loaded in Purescript via the FFI:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// inline .plutus file as a string</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>exports<span class="op">.</span><span class="at">myscript</span> <span class="op">=</span> <span class="pp">require</span>(<span class="st">&quot;Scripts/myscript.plutus&quot;</span>)<span class="op">;</span></span></code></pre></div>
+<p>And on the purescript side, the script can be loaded like so:</p>
+<pre class="purescript"><code>foreign import myscript :: String
+
+parseValidator :: Contract Validator
+parseValidator = liftMaybe (error &quot;Error decoding myscript&quot;) do
+    envelope &lt;- decodeTextEnvelope myscript
+    Validator &lt;$&gt; Contract.TextEnvelope.plutusScriptV1FromEnvelope envelope
+myContract cfg = runContract_ cfg $ do
+  validator &lt;- parseValidator
+  ...</code></pre>
+<p>This way you avoid hardcoding your scripts directly to .purs files
+which could lead to synchronization issues should your scripts
+change.</p>
+<p><strong>Note</strong>: The <code>alias</code> method above will only
+work in the browser when bundling with Webpack. In order to load the
+scripts for both browser and NodeJS environments, you can use the
+<code>BROWSER_RUNTIME</code> environment variable like so:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode javascript"><code class="sourceCode javascript"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span> script<span class="op">;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="kw">typeof</span> BROWSER_RUNTIME <span class="op">!=</span> <span class="st">&quot;undefined&quot;</span> <span class="op">&amp;&amp;</span> BROWSER_RUNTIME) {</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  script <span class="op">=</span> <span class="pp">require</span>(<span class="st">&quot;Scripts/my-script.plutus&quot;</span>)<span class="op">;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> fs <span class="op">=</span> <span class="pp">require</span>(<span class="st">&quot;fs&quot;</span>)<span class="op">;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">const</span> path <span class="op">=</span> <span class="pp">require</span>(<span class="st">&quot;path&quot;</span>)<span class="op">;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  script <span class="op">=</span> fs<span class="op">.</span><span class="fu">readFileSync</span>(</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    path<span class="op">.</span><span class="fu">resolve</span>(<span class="bu">__dirname</span><span class="op">,</span> <span class="st">&quot;../../fixtures/scripts/my-script.plutus&quot;</span>)<span class="op">,</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;utf8&quot;</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  )<span class="op">;</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>exports<span class="op">.</span><span class="at">myScript</span> <span class="op">=</span> script<span class="op">;</span></span></code></pre></div>
+<p>Note that the relative path passed to <code>path.resolve</code> for
+the NodeJS case starts from the <code>output</code> directory that the
+Purescript compiler produces.</p>
+<h2 id="serializing-plutus-scripts">Serializing Plutus scripts</h2>
+<h3 id="plutustx">PlutusTx</h3>
+<p>Take <code>alwaysSucceeds</code> as an example:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="ot">alwaysSucceeds ::</span> <span class="dt">BuiltinData</span> <span class="ot">-&gt;</span> <span class="dt">BuiltinData</span> <span class="ot">-&gt;</span> <span class="dt">BuiltinData</span> <span class="ot">-&gt;</span> ()</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>alwaysSucceeds _ _ _ <span class="ot">=</span> ()</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="ot">alwaysSucceedsCompiled ::</span> <span class="dt">CompiledCode</span> (<span class="dt">BuiltinData</span> <span class="ot">-&gt;</span> <span class="dt">BuiltinData</span> <span class="ot">-&gt;</span> ())</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>alwaysSucceedsCompiled <span class="ot">=</span> <span class="op">$$</span>(PlutusTx.compile [<span class="op">||</span> alwaysSucceeds <span class="op">||</span>])</span></code></pre></div>
+<p>For older plutus commits use:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Plutus.V1.Ledger.Api</span> (fromCompiledCode)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Codec.Serialise</span> (serialise)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="ot">scriptToCBOR ::</span> <span class="dt">CompiledCode</span> a <span class="ot">-&gt;</span> <span class="dt">ByteString</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>scriptToCBOR <span class="ot">=</span> B.toStrict <span class="op">.</span> serialise <span class="op">.</span> fromCompiledCode</span></code></pre></div>
+<p>and for newer (match on plutus-ledger-api import):</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">PlutusLedgerApi.Common</span> (serialiseCompiledCode)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Data.ByteString.Short</span> (fromShort)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>scriptToCBOR <span class="ot">=</span> Short.fromShort <span class="op">.</span> serialiseCompiledCode</span></code></pre></div>
+<p>Then save a script to a file:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode haskell"><code class="sourceCode haskell"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> <span class="dt">Cardano.Api</span> (writeFileTextEnvelope, <span class="dt">PlutusScriptV1</span>, <span class="dt">SerialiseAsCBOR</span> (deserialiseFromCBOR), <span class="dt">AsType</span> (<span class="dt">AsScript</span>, <span class="dt">AsPlutusScriptV1</span>), <span class="dt">Script</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>main <span class="ot">=</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">case</span> deserialiseFromCBOR (<span class="dt">AsScript</span> <span class="dt">AsPlutusScriptV1</span>) <span class="op">$</span> scriptToCBOR alwaysSucceedsCompiled <span class="kw">of</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Left</span> err <span class="ot">-&gt;</span> <span class="fu">print</span> err</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="dt">Right</span> script <span class="ot">-&gt;</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>      writeFileTextEnvelope <span class="op">@</span>(<span class="dt">Script</span> <span class="dt">PlutusScriptV1</span>) <span class="st">&quot;always-succeeds.plutus&quot;</span> (<span class="dt">Just</span> <span class="st">&quot;My script&quot;</span>) script</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>      <span class="op">&gt;&gt;=</span> <span class="fu">either</span> <span class="fu">print</span> <span class="fu">return</span></span></code></pre></div>
+<p>Note that we specified plutus version.</p>
+<h3 id="plutarch">Plutarch</h3>
+<p>You can use <a
+href="https://github.com/mlabs-haskell/ply"><code>ply</code></a>.</p>
+</body>
+</html>
