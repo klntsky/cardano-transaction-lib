@@ -60,8 +60,11 @@
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="./pandoc.css" />
+  <!-- edit ./readme-header.html as well -->
   <center>
-    <a href="./index.html#documentation">back to contents</a> <a href="./doc/">browse API docs</a>
+    <a href="./index.html#documentation">&lArr; back to contents</a>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="./doc/">&#x1f5ce; browse API</a>
   </center>
   <!--[if lt IE 9]>
     <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
@@ -117,7 +120,7 @@ Blockfrost-powered test suite</h2>
 default, the test suite is configured to run on
 <code>preview</code>.</p>
 <p>The configuration is stored in environment variables defined in <a
-href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/81730e09d1f6820ff531ad8a4237460e8fe8449b
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/8e9bf1e16d84fef41ac756c06aebfbb96b24940d
 /test/blockfrost.env"><code>test/blockfrost.env</code> file</a>, or a
 similar one in your project if it is initialized from the template.</p>
 <p>Here’s how to populate this configuration file to be ready for
@@ -225,11 +228,11 @@ e.g. <code>Contract.Config.testnetConfig</code></li>
 <li>A <code>ContractTest</code> suite</li>
 </ol>
 <p>See <a
-href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/81730e09d1f6820ff531ad8a4237460e8fe8449b
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/8e9bf1e16d84fef41ac756c06aebfbb96b24940d
 /test/Blockfrost/Contract.purs">this example</a>, which can be executed
 with <code>npm run blockfrost-test</code> command. It will automatically
 load the exported variables from <a
-href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/81730e09d1f6820ff531ad8a4237460e8fe8449b
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/8e9bf1e16d84fef41ac756c06aebfbb96b24940d
 /test/blockfrost.env"><code>test/blockfrost.env</code></a>.</p>
 <h2 id="running-contracts-with-blockfrost">Running
 <code>Contract</code>s with Blockfrost</h2>

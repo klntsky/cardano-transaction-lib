@@ -15,8 +15,11 @@
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
   <link rel="stylesheet" href="./pandoc.css" />
+  <!-- edit ./readme-header.html as well -->
   <center>
-    <a href="./index.html#documentation">back to contents</a> <a href="./doc/">browse API docs</a>
+    <a href="./index.html#documentation">&lArr; back to contents</a>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+    <a href="./doc/">&#x1f5ce; browse API</a>
   </center>
   <!--[if lt IE 9]>
     <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
@@ -69,18 +72,18 @@ private key), as well as to sign arbitrary data or data hashes.</p>
 hashes) are made serialize-able to PlutusData to allow for simpler
 offchain/onchain interop.</p>
 <p><a
-href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/81730e09d1f6820ff531ad8a4237460e8fe8449b
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/8e9bf1e16d84fef41ac756c06aebfbb96b24940d
 /src/Contract/Crypto/Secp256k1/ECDSA.purs">Public interface for ECDSA
 support in CTL</a></p>
 <p><a
-href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/81730e09d1f6820ff531ad8a4237460e8fe8449b
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/8e9bf1e16d84fef41ac756c06aebfbb96b24940d
 /examples/ECDSA.purs">ECDSA verification usage example</a></p>
 <p><a
-href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/81730e09d1f6820ff531ad8a4237460e8fe8449b
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/8e9bf1e16d84fef41ac756c06aebfbb96b24940d
 /src/Contract/Crypto/Secp256k1/Schnorr.purs">Public interface for
 Schnorr support in CTL</a></p>
 <p><a
-href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/81730e09d1f6820ff531ad8a4237460e8fe8449b
+href="https://github.com/Plutonomicon/cardano-transaction-lib/blob/8e9bf1e16d84fef41ac756c06aebfbb96b24940d
 /examples/Schnorr.purs">Schnorr verification usage example</a></p>
 <p>Both examples show how a signature that is constructed off-chain can
 be passed for on-chain verification.</p>
