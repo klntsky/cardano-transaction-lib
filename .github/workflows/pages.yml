@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - develop
+      - klntsky/generate-docs
 permissions:
   contents: write
 jobs:
@@ -12,16 +13,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-
-      - name: Install and Build
+      - name: Setup Pandoc
+        uses: nikeee/setup-pandoc@v1
+        with:
+        pandoc-version: '2.17.1.1'
+      - name: Install, build and generate docs
         run: |
           npm install -g spago
           npm install -g purescript@0.14.5
           npm install -g purescript-docs-search
           spago docs --no-search
           purescript-docs-search build-index --package-name cardano-transaction-lib
+          make pandoc
+          mkdir -p html/doc
+          mv generated-docs/html html/doc/
       - name: Deploy
         uses: JamesIves/github-pages-deploy-action@v4.3.3
         with:
           branch: gh-pages
-          folder: generated-docs/html
+          folder: html
